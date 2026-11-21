@@ -10,6 +10,7 @@ public class PlayerData {
     public int gourdUses = 3;        // текущие глотки тыквы
     public int resurrections = 2;    // текущие воскрешения
     public int skillPoints = 0;
+    public boolean kitGiven = false;
     public int passives = 0;         // битовая маска пассивных навыков (ordinal Skill)
     public int unlocked = 1;         // битовая маска изученных приёмов (бит 0 = Ичимондзи)
     public int selectedArt = 0;
@@ -45,6 +46,7 @@ public class PlayerData {
         n.putInt("skillPoints", skillPoints);
         n.putInt("unlocked", unlocked);
         n.putInt("passives", passives);
+        n.putBoolean("kitGiven", kitGiven);
         n.putInt("selectedArt", selectedArt);
         n.putInt("killCounter", killCounter);
         return n;
@@ -60,6 +62,7 @@ public class PlayerData {
         d.skillPoints = n.getInt("skillPoints");
         d.unlocked = n.contains("unlocked") ? n.getInt("unlocked") : 1;
         d.passives = n.getInt("passives");
+        d.kitGiven = n.getBoolean("kitGiven");
         d.selectedArt = n.getInt("selectedArt");
         d.killCounter = n.getInt("killCounter");
         return d;

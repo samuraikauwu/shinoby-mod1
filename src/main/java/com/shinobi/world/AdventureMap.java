@@ -23,6 +23,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.Random;
+import java.util.function.Consumer;
 
 /**
  * Карта-прохождение (оригинальная): святилище -> деревня -> бамбуковая роща и храм -> замок -> гора -> зал.
@@ -159,14 +160,19 @@ public final class AdventureMap {
             player.sendMessage(Text.translatable("msg.shinobi.adventure_overworld_only"), false);
             return;
         }
+        buildAt(w, player.getBlockX() + 6, player.getBlockY() - 1, player.getBlockZ(), t -> player.sendMessage(t, false));
+    }
+
+    /** Построить карту, начиная с точки (x, gy, z): gy — высота верхнего блока земли. Сообщения идут в notify. */
+    public static void buildAt(ServerWorld w, int ox, int gy, int oz, Consumer<Text> notify) {
         if (building) {
-            player.sendMessage(Text.translatable("msg.shinobi.adventure_busy"), false);
+            notify.accept(Text.translatable("msg.shinobi.adventure_busy"));
             return;
         }
         building = true;
         ShinobiState st = ShinobiState.get(w.getServer());
-        Ctx c = new Ctx(w, player.getBlockX() + 6, player.getBlockY() - 1, player.getBlockZ(), st);
-        player.sendMessage(Text.translatable("msg.shinobi.adventure_building"), false);
+        Ctx c = new Ctx(w, ox, gy, oz, st);
+        notify.accept(Text.translatable("msg.shinobi.adventure_building"));
 
         Runnable[] zones = {
                 () -> hub(c), () -> village(c), () -> grove(c), () -> castle(c), () -> mountain(c), () -> hall(c)
@@ -176,16 +182,16 @@ public final class AdventureMap {
             Tasks.later(w.getServer(), 10 + i * 30, () -> {
                 try {
                     zones[n].run();
-                    player.sendMessage(Text.translatable("msg.shinobi.adventure_zone", n + 1, zones.length), true);
+                    notify.accept(Text.translatable("msg.shinobi.adventure_zone", n + 1, zones.length));
                 } catch (Exception e) {
-                    player.sendMessage(Text.literal("Ошибка при строительстве зоны " + (n + 1) + ": " + e), false);
+                    notify.accept(Text.literal("Ошибка при строительстве зоны " + (n + 1) + ": " + e));
                 }
             });
         }
         Tasks.later(w.getServer(), 10 + zones.length * 30, () -> {
             st.markDirty();
             building = false;
-            player.sendMessage(Text.translatable("msg.shinobi.adventure_done"), false);
+            notify.accept(Text.translatable("msg.shinobi.adventure_done"));
         });
     }
 

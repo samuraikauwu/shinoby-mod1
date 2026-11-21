@@ -4,17 +4,29 @@
   "version": "${version}",
   "name": "Shinobi: Sekiro Mechanics",
   "description": "Механики Sekiro в Minecraft: осанка, отражение, добивание, уклонение, опасные атаки, протез шиноби, боевые приёмы, улучшения, воскрешение, боссы.",
-  "authors": ["Shinobi Mod"],
+  "authors": [
+    "Shinobi Mod"
+  ],
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
-    "main": ["com.shinobi.ShinobiMod"],
-    "client": ["com.shinobi.client.ShinobiClient"]
+    "main": [
+      "com.shinobi.ShinobiMod"
+    ],
+    "client": [
+      "com.shinobi.client.ShinobiClient"
+    ]
   },
   "depends": {
     "fabricloader": ">=0.15.0",
     "minecraft": "~1.20.1",
     "java": ">=17",
     "fabric-api": "*"
-  }
+  },
+  "mixins": [
+    {
+      "config": "shinobi.mixins.json",
+      "environment": "client"
+    }
+  ]
 }

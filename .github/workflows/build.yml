@@ -17,14 +17,31 @@ jobs:
         with:
           gradle-version: 8.5
       - run: gradle build --no-daemon
+      - name: Check mixin target in mappings
+        run: |
+          for f in $(find . ~/.gradle -name '*.tiny' 2>/dev/null | head -5); do echo "== $f"; grep -m5 -P '\trenderHealthBar\t' "$f" || true; done
+      - name: Build adventure world
+        run: bash tools/build-world.sh
+      - name: Package
+        run: |
+          mkdir -p package/mods package/saves
+          cp build/libs/shinobi-1.0.0.jar package/mods/
+          cp server/mods/fabric-api.jar "package/mods/fabric-api-0.92.2+1.20.1.jar"
+          cp -r "server/Shinobi Adventure" "package/saves/Shinobi Adventure"
+          cp tools/README-INSTALL.txt package/README.txt
+          git archive --format=zip -o package/shinobi-source.zip HEAD
+          (cd package && zip -qr ../Shinobi-Complete.zip .)
+          (cd server && zip -qr "../Shinobi-Adventure-World.zip" "Shinobi Adventure")
+          ls -la Shinobi-Complete.zip Shinobi-Adventure-World.zip
+          tail -30 server/server.log
       - uses: actions/upload-artifact@v4
         with:
-          name: shinobi-mod
-          path: build/libs/shinobi-1.0.0.jar
+          name: shinobi-complete
+          path: Shinobi-Complete.zip
       - name: Publish release
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest build/libs/shinobi-1.0.0.jar --title "Shinobi mod (latest build)" --notes "Готовый мод. Положите shinobi-1.0.0.jar в папку mods (Fabric 1.20.1 + Fabric API)."
+          gh release create latest Shinobi-Complete.zip build/libs/shinobi-1.0.0.jar Shinobi-Adventure-World.zip --title "Shinobi mod (latest build)" --notes "Shinobi-Complete.zip — всё в одном: мод, Fabric API, готовая карта, исходники и инструкция (README.txt внутри)."

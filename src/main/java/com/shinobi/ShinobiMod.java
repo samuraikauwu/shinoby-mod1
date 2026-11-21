@@ -53,7 +53,13 @@ public class ShinobiMod implements ModInitializer {
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ServerPlayerEntity p = handler.getPlayer();
-            applyAttributes(p, ShinobiState.of(p));
+            PlayerData jd = ShinobiState.of(p);
+            applyAttributes(p, jd);
+            if (!jd.kitGiven) {
+                jd.kitGiven = true;
+                ShinobiCommands.giveKit(p);
+                ShinobiState.save(p);
+            }
             ShinobiNet.sync(p);
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
