@@ -50,7 +50,7 @@ public final class PostureSystem {
     }
 
     public static void setSegments(Entity e, int n) {
-        for (int i = 1; i <= 3; i++) e.removeCommandTag("shinobi_seg" + i);
+        for (int i = 1; i <= 3; i++) e.removeScoreboardTag("shinobi_seg" + i);
         e.addCommandTag("shinobi_seg" + n);
     }
 
