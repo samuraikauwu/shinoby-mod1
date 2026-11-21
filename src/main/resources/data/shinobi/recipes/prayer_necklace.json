@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "shinobi:prayer_bead"
+    },
+    {
+      "item": "shinobi:prayer_bead"
+    },
+    {
+      "item": "shinobi:prayer_bead"
+    },
+    {
+      "item": "shinobi:prayer_bead"
+    }
+  ],
+  "result": {
+    "item": "shinobi:prayer_necklace"
+  }
+}
