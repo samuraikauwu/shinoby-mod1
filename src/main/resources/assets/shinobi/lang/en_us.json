@@ -98,5 +98,9 @@
   "entity.shinobi.lord_boss": "Genichiro Ashina",
   "entity.shinobi.shadow_boss": "Owl",
   "entity.shinobi.saint_boss": "Isshin, the Sword Saint",
-  "entity.shinobi.oni_boss": "Gyoubu Masataka Oniwa"
+  "entity.shinobi.oni_boss": "Gyoubu Masataka Oniwa",
+  "item.shinobi.oni_kanabo": "Oni Kanabo",
+  "hud.shinobi.perilous_0": "Thrust — dash (Alt)!",
+  "hud.shinobi.perilous_1": "Sweep — jump!",
+  "hud.shinobi.perilous_2": "Grab — dash (Alt)!"
 }

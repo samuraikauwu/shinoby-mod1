@@ -113,7 +113,7 @@ public final class PerilousSystem {
         ACTIVE.put(mob.getUuid(), t);
         mob.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, t.ticksLeft + 4, 3));
         world.playSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.BLOCK_BELL_USE, SoundCategory.HOSTILE, 1.5f, 0.5f);
-        target.sendMessage(Text.literal("危").formatted(Formatting.RED, Formatting.BOLD), true);
+        com.shinobi.net.ShinobiNet.perilous(target, type.ordinal());
     }
 
     private static void resolve(ServerWorld world, HostileEntity mob, ServerPlayerEntity target, Telegraph t) {

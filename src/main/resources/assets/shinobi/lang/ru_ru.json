@@ -98,5 +98,9 @@
   "entity.shinobi.lord_boss": "Гэнитиро Асина",
   "entity.shinobi.shadow_boss": "Сова",
   "entity.shinobi.saint_boss": "Исшин, Святой меча",
-  "entity.shinobi.oni_boss": "Гёбу Масатака Онива"
+  "entity.shinobi.oni_boss": "Гёбу Масатака Онива",
+  "item.shinobi.oni_kanabo": "Канабо они",
+  "hud.shinobi.perilous_0": "Выпад — сделайте рывок (Alt)!",
+  "hud.shinobi.perilous_1": "Подсечка — прыгайте!",
+  "hud.shinobi.perilous_2": "Захват — сделайте рывок (Alt)!"
 }

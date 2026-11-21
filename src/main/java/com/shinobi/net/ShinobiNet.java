@@ -26,6 +26,7 @@ public final class ShinobiNet {
     public static final Identifier DASH = ShinobiMod.id("dash");
     public static final Identifier ART = ShinobiMod.id("art");
     public static final Identifier CYCLE = ShinobiMod.id("cycle");
+    public static final Identifier PERILOUS = ShinobiMod.id("perilous");
 
     private ShinobiNet() {
     }
@@ -69,14 +70,23 @@ public final class ShinobiNet {
         w.spawnParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.1, p.getZ(), 6, 0.25, 0.05, 0.25, 0.02);
     }
 
+    /** Показать игроку вспышку опасной атаки (type: 0 выпад, 1 подсечка, 2 захват). */
+    public static void perilous(ServerPlayerEntity p, int type) {
+        PacketByteBuf buf = PacketByteBufs.create();
+        buf.writeInt(type);
+        ServerPlayNetworking.send(p, PERILOUS, buf);
+    }
+
     /** Отправить игроку его данные для HUD. */
     public static void sync(ServerPlayerEntity p) {
         PlayerData d = ShinobiState.of(p);
         PlayerRuntime rt = PlayerRuntime.of(p);
         long now = p.getWorld().getTime();
 
-        float tPosture = 0, tMax = 0;
+        float tPosture = 0, tMax = 0, tHealth = 0;
         boolean tBroken = false, tBoss = false;
+        int tSegments = 0;
+        String tName = "";
         if (rt.lastTarget != null && now - rt.lastTargetTick < 120) {
             Entity e = p.getServerWorld().getEntity(rt.lastTarget);
             if (e instanceof LivingEntity le && le.isAlive()) {
@@ -84,6 +94,9 @@ public final class ShinobiNet {
                 tMax = PostureSystem.max(le);
                 tBroken = PostureSystem.isBroken(le);
                 tBoss = PostureSystem.isBoss(le);
+                tHealth = Math.max(0f, le.getHealth() / le.getMaxHealth());
+                tSegments = tBoss ? PostureSystem.segments(le) : 0;
+                tName = le.getName().getString();
             }
         }
 
@@ -104,6 +117,9 @@ public final class ShinobiNet {
         buf.writeBoolean(tBroken);
         buf.writeBoolean(tBoss);
         buf.writeBoolean(p.hasStatusEffect(StatusEffects.SPEED));
+        buf.writeFloat(tHealth);
+        buf.writeInt(tSegments);
+        buf.writeString(tName);
         ServerPlayNetworking.send(p, SYNC, buf);
     }
 }

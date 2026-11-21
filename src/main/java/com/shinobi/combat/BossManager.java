@@ -76,6 +76,9 @@ public final class BossManager {
         if (type.katana) {
             mob.equipStack(EquipmentSlot.MAINHAND, new ItemStack(type == Type.ISSHIN ? ModItems.MORTAL_BLADE : ModItems.ASHINA_KATANA));
             mob.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0f);
+        } else {
+            mob.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.ONI_KANABO));
+            mob.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0f);
         }
         mob.setTarget(summoner);
         world.spawnEntity(mob);

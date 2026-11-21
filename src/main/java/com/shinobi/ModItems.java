@@ -39,6 +39,8 @@ public final class ModItems {
     public static final Item MORTAL_BLADE = reg("mortal_blade",
             new KatanaItem(new KatanaItem.Material(2200, Ingredient.ofItems(Items.NETHERITE_INGOT)), 7, -1.9f, 1.5f, new Item.Settings().fireproof()));
 
+    public static final Item ONI_KANABO = reg("oni_kanabo", new Item(new Item.Settings().maxCount(1)));
+
     // ---------- Протез шиноби ----------
     public static final Map<ProstheticTools.Tool, Item> TOOLS = new EnumMap<>(ProstheticTools.Tool.class);
 
