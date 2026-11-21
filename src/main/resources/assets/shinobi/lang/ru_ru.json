@@ -90,5 +90,13 @@
   "key.shinobi.art": "Боевой приём",
   "key.shinobi.cycle": "Сменить приём",
   "key.categories.shinobi": "Шиноби",
-  "itemGroup.shinobi.main": "Шиноби"
+  "itemGroup.shinobi.main": "Шиноби",
+  "item.shinobi.shinobi_hood": "Капюшон шиноби",
+  "item.shinobi.shinobi_garb": "Одеяние шиноби",
+  "item.shinobi.shinobi_leggings": "Штаны шиноби",
+  "item.shinobi.shinobi_boots": "Таби шиноби",
+  "entity.shinobi.lord_boss": "Гэнитиро Асина",
+  "entity.shinobi.shadow_boss": "Сова",
+  "entity.shinobi.saint_boss": "Исшин, Святой меча",
+  "entity.shinobi.oni_boss": "Гёбу Масатака Онива"
 }

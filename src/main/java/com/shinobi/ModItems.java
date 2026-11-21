@@ -8,7 +8,9 @@ import com.shinobi.item.ConsumableItem;
 import com.shinobi.item.KatanaItem;
 import com.shinobi.item.ProstheticItem;
 import com.shinobi.item.ProstheticTools;
+import com.shinobi.item.ShinobiArmorMaterial;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.minecraft.item.ArmorItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
@@ -119,6 +121,12 @@ public final class ModItems {
     public static final Item BELL_OWL = reg("bell_owl", new BossBellItem(BossManager.Type.OWL, new Item.Settings().maxCount(1)));
     public static final Item BELL_ISSHIN = reg("bell_isshin", new BossBellItem(BossManager.Type.ISSHIN, new Item.Settings().maxCount(1)));
     public static final Item BELL_GYOUBU = reg("bell_gyoubu", new BossBellItem(BossManager.Type.GYOUBU, new Item.Settings().maxCount(1)));
+
+    // ---------- Броня шиноби ----------
+    public static final Item SHINOBI_HOOD = reg("shinobi_hood", new ArmorItem(ShinobiArmorMaterial.INSTANCE, ArmorItem.Type.HELMET, new Item.Settings()));
+    public static final Item SHINOBI_GARB = reg("shinobi_garb", new ArmorItem(ShinobiArmorMaterial.INSTANCE, ArmorItem.Type.CHESTPLATE, new Item.Settings()));
+    public static final Item SHINOBI_LEGGINGS = reg("shinobi_leggings", new ArmorItem(ShinobiArmorMaterial.INSTANCE, ArmorItem.Type.LEGGINGS, new Item.Settings()));
+    public static final Item SHINOBI_BOOTS = reg("shinobi_boots", new ArmorItem(ShinobiArmorMaterial.INSTANCE, ArmorItem.Type.BOOTS, new Item.Settings()));
 
     private ModItems() {
     }

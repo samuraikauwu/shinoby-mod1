@@ -35,6 +35,7 @@ public class ShinobiMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        ModEntities.register();
         ModBlocks.register();
         ModItems.register();
         ShinobiNet.registerServer();

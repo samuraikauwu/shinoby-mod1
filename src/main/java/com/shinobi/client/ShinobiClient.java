@@ -1,11 +1,13 @@
 package com.shinobi.client;
 
+import com.shinobi.ModEntities;
 import com.shinobi.combat.Art;
 import com.shinobi.net.ShinobiNet;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.MinecraftClient;
@@ -61,6 +63,11 @@ public class ShinobiClient implements ClientModInitializer {
                 sugar = su;
             });
         });
+
+        EntityRendererRegistry.register(ModEntities.LORD, ctx -> new ShinobiBossRenderer(ctx, "lord", 1.05f));
+        EntityRendererRegistry.register(ModEntities.SHADOW, ctx -> new ShinobiBossRenderer(ctx, "shadow", 1.0f));
+        EntityRendererRegistry.register(ModEntities.SAINT, ctx -> new ShinobiBossRenderer(ctx, "saint", 1.15f));
+        EntityRendererRegistry.register(ModEntities.ONI, ctx -> new ShinobiBossRenderer(ctx, "oni", 1.5f));
 
         ClientTickEvents.END_CLIENT_TICK.register(ShinobiClient::tick);
         HudRenderCallback.EVENT.register(ShinobiClient::renderHud);

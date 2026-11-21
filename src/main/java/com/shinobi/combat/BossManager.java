@@ -1,5 +1,6 @@
 package com.shinobi.combat;
 
+import com.shinobi.ModEntities;
 import com.shinobi.ModItems;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
@@ -21,24 +22,25 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /** Боссы в стиле Sekiro: вызываются колоколами, имеют сегменты осанки и полосу здоровья. */
 public final class BossManager {
     public enum Type {
-        GENICHIRO("genichiro", EntityType.VINDICATOR, 180, 10, 2, 0.30, true),
-        OWL("owl", EntityType.VINDICATOR, 140, 8, 2, 0.40, true),
-        ISSHIN("isshin", EntityType.WITHER_SKELETON, 320, 14, 3, 0.32, true),
-        GYOUBU("gyoubu", EntityType.RAVAGER, 220, 12, 2, 0.35, false);
+        GENICHIRO("genichiro", () -> ModEntities.LORD, 180, 10, 2, 0.30, true),
+        OWL("owl", () -> ModEntities.SHADOW, 140, 8, 2, 0.40, true),
+        ISSHIN("isshin", () -> ModEntities.SAINT, 320, 14, 3, 0.32, true),
+        GYOUBU("gyoubu", () -> ModEntities.ONI, 220, 12, 2, 0.35, false);
 
         public final String id;
-        public final EntityType<? extends MobEntity> entity;
+        public final Supplier<EntityType<? extends MobEntity>> entity;
         public final double health;
         public final double damage;
         public final int segments;
         public final double speed;
         public final boolean katana;
 
-        Type(String id, EntityType<? extends MobEntity> entity, double health, double damage, int segments, double speed, boolean katana) {
+        Type(String id, Supplier<EntityType<? extends MobEntity>> entity, double health, double damage, int segments, double speed, boolean katana) {
             this.id = id;
             this.entity = entity;
             this.health = health;
@@ -55,7 +57,7 @@ public final class BossManager {
     }
 
     public static boolean spawn(ServerWorld world, Vec3d pos, Type type, ServerPlayerEntity summoner) {
-        MobEntity mob = type.entity.create(world);
+        MobEntity mob = type.entity.get().create(world);
         if (mob == null) return false;
         mob.refreshPositionAndAngles(pos.x, pos.y, pos.z, summoner.getYaw() + 180f, 0f);
 

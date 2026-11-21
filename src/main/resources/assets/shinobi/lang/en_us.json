@@ -90,5 +90,13 @@
   "key.shinobi.art": "Combat Art",
   "key.shinobi.cycle": "Cycle Combat Art",
   "key.categories.shinobi": "Shinobi",
-  "itemGroup.shinobi.main": "Shinobi"
+  "itemGroup.shinobi.main": "Shinobi",
+  "item.shinobi.shinobi_hood": "Shinobi Hood",
+  "item.shinobi.shinobi_garb": "Shinobi Garb",
+  "item.shinobi.shinobi_leggings": "Shinobi Leggings",
+  "item.shinobi.shinobi_boots": "Shinobi Tabi",
+  "entity.shinobi.lord_boss": "Genichiro Ashina",
+  "entity.shinobi.shadow_boss": "Owl",
+  "entity.shinobi.saint_boss": "Isshin, the Sword Saint",
+  "entity.shinobi.oni_boss": "Gyoubu Masataka Oniwa"
 }
