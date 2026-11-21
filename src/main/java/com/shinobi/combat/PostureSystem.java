@@ -219,6 +219,7 @@ public final class PostureSystem {
                 if (e instanceof PlayerEntity pl) {
                     PlayerRuntime rt = PlayerRuntime.of(pl);
                     if (rt.sugarUntil > now) rec *= 3f;
+                    if (pl instanceof ServerPlayerEntity sp2 && Skill.has(sp2, Skill.VITAL_RECOVER)) rec *= 1.3f;
                 }
                 s.value = Math.max(0f, s.value - rec);
                 if (s.value <= 0f) it.remove();

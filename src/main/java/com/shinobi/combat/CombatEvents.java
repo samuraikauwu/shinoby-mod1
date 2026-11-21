@@ -36,6 +36,10 @@ public final class CombatEvents {
     /** Окно идеального отражения (тики с начала удержания блока). */
     public static final int DEFLECT_WINDOW = 8;
 
+    public static int window(ServerPlayerEntity p) {
+        return DEFLECT_WINDOW + (Skill.has(p, Skill.DEFLECT_WINDOW) ? 3 : 0);
+    }
+
     private CombatEvents() {
     }
 
@@ -98,7 +102,7 @@ public final class CombatEvents {
             if (p.isUsingItem() && p.getActiveItem().getItem() instanceof KatanaItem k && frontal(p, source)) {
                 int useTime = p.getItemUseTime();
                 ServerWorld sw = (ServerWorld) world;
-                if (useTime <= DEFLECT_WINDOW) {
+                if (useTime <= window(p)) {
                     // Идеальное отражение
                     spark(sw, p, true);
                     sw.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ITEM_SHIELD_BLOCK, SoundCategory.PLAYERS, 1.2f, 1.8f);

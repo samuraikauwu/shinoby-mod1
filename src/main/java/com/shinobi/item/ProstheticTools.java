@@ -51,7 +51,7 @@ public final class ProstheticTools {
     public static boolean activate(Tool tool, ServerWorld w, ServerPlayerEntity p, int level) {
         PlayerRuntime rt = PlayerRuntime.of(p);
         long now = w.getTime();
-        float scale = 1f + 0.25f * level;
+        float scale = 1f + 0.25f * level + (com.shinobi.combat.Skill.has(p, com.shinobi.combat.Skill.TOOL_POWER) ? 0.15f : 0f);
         Vec3d look = p.getRotationVec(1f);
         Vec3d eye = p.getEyePos();
 

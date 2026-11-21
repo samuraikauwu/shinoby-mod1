@@ -4,6 +4,7 @@ import com.shinobi.ShinobiMod;
 import com.shinobi.ShinobiUtil;
 import com.shinobi.combat.CombatArts;
 import com.shinobi.combat.PostureSystem;
+import com.shinobi.combat.Skill;
 import com.shinobi.data.PlayerData;
 import com.shinobi.data.PlayerRuntime;
 import com.shinobi.data.ShinobiState;
@@ -27,6 +28,7 @@ public final class ShinobiNet {
     public static final Identifier ART = ShinobiMod.id("art");
     public static final Identifier CYCLE = ShinobiMod.id("cycle");
     public static final Identifier PERILOUS = ShinobiMod.id("perilous");
+    public static final Identifier LEARN = ShinobiMod.id("learn");
 
     private ShinobiNet() {
     }
@@ -42,6 +44,10 @@ public final class ShinobiNet {
                     if (player.isAlive() && !player.isSpectator()) CombatArts.cast(player);
                     sync(player);
                 }));
+        ServerPlayNetworking.registerGlobalReceiver(LEARN, (server, player, handler, buf, responseSender) -> {
+            int idx = buf.readInt();
+            server.execute(() -> Skill.tryLearn(player, idx));
+        });
         ServerPlayNetworking.registerGlobalReceiver(CYCLE, (server, player, handler, buf, responseSender) ->
                 server.execute(() -> {
                     CombatArts.cycle(player);
@@ -61,9 +67,9 @@ public final class ShinobiNet {
         if (dir.lengthSquared() < 1.0E-4 || !Double.isFinite(dir.lengthSquared())) return;
         dir = dir.normalize();
 
-        rt.dashCooldownUntil = now + 22;
+        rt.dashCooldownUntil = now + (Skill.has(p, Skill.SWIFT_DASH) ? 15 : 22);
         rt.dashTick = now;
-        rt.dashInvulUntil = now + 8;
+        rt.dashInvulUntil = now + (Skill.has(p, Skill.SHADOW_STEP) ? 11 : 8);
         double power = p.isOnGround() ? 1.05 : 0.7;
         ShinobiUtil.velocity(p, dir.x * power, p.isOnGround() ? 0.18 : p.getVelocity().y, dir.z * power);
         w.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP, SoundCategory.PLAYERS, 0.5f, 1.6f);
@@ -120,6 +126,7 @@ public final class ShinobiNet {
         buf.writeFloat(tHealth);
         buf.writeInt(tSegments);
         buf.writeString(tName);
+        buf.writeInt(d.passives);
         ServerPlayNetworking.send(p, SYNC, buf);
     }
 }

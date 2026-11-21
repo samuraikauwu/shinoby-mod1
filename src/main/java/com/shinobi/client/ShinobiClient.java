@@ -25,6 +25,7 @@ public class ShinobiClient implements ClientModInitializer {
     static KeyBinding dashKey;
     static KeyBinding artKey;
     static KeyBinding cycleKey;
+    static KeyBinding skillsKey;
 
     // Данные HUD (приходят с сервера)
     static float posture, postureMax = 100, tPosture, tMax;
@@ -32,6 +33,7 @@ public class ShinobiClient implements ClientModInitializer {
     static float tHealth;
     static int tSegments, perilousTicks, perilousType;
     static String tName = "";
+    static int passives;
     static int resurrections = 2, resMax = 2, gourd = 3, gourdMax = 3, skillPoints, unlocked = 1, selectedArt, attackPower;
 
     @Override
@@ -39,6 +41,8 @@ public class ShinobiClient implements ClientModInitializer {
         dashKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.shinobi.dash", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, CATEGORY));
         artKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.shinobi.art", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_R, CATEGORY));
         cycleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.shinobi.cycle", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY));
+
+        skillsKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.shinobi.skills", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_K, CATEGORY));
 
         ClientPlayNetworking.registerGlobalReceiver(ShinobiNet.SYNC, (client, handler, buf, sender) -> {
             float a = buf.readFloat(), b = buf.readFloat();
@@ -50,6 +54,7 @@ public class ShinobiClient implements ClientModInitializer {
             float th = buf.readFloat();
             int ts = buf.readInt();
             String tn = buf.readString();
+            int pv = buf.readInt();
             client.execute(() -> {
                 posture = a;
                 postureMax = Math.max(1f, b);
@@ -70,6 +75,7 @@ public class ShinobiClient implements ClientModInitializer {
                 tHealth = th;
                 tSegments = ts;
                 tName = tn;
+                passives = pv;
             });
         });
 
@@ -109,6 +115,9 @@ public class ShinobiClient implements ClientModInitializer {
             buf.writeDouble(dir.x);
             buf.writeDouble(dir.z);
             ClientPlayNetworking.send(ShinobiNet.DASH, buf);
+        }
+        while (skillsKey.wasPressed()) {
+            mc.setScreen(new ShinobiSkillScreen());
         }
         while (artKey.wasPressed()) {
             ClientPlayNetworking.send(ShinobiNet.ART, PacketByteBufs.create());

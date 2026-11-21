@@ -10,6 +10,7 @@ public class PlayerData {
     public int gourdUses = 3;        // текущие глотки тыквы
     public int resurrections = 2;    // текущие воскрешения
     public int skillPoints = 0;
+    public int passives = 0;         // битовая маска пассивных навыков (ordinal Skill)
     public int unlocked = 1;         // битовая маска изученных приёмов (бит 0 = Ичимондзи)
     public int selectedArt = 0;
     public int killCounter = 0;
@@ -23,7 +24,7 @@ public class PlayerData {
     }
 
     public float maxPosture() {
-        return 100f + 12f * necklaces;
+        return 100f + 12f * necklaces + ((passives & (1 << com.shinobi.combat.Skill.POSTURE_RESIST.ordinal())) != 0 ? 15f : 0f);
     }
 
     public boolean has(int artOrdinal) {
@@ -43,6 +44,7 @@ public class PlayerData {
         n.putInt("resurrections", resurrections);
         n.putInt("skillPoints", skillPoints);
         n.putInt("unlocked", unlocked);
+        n.putInt("passives", passives);
         n.putInt("selectedArt", selectedArt);
         n.putInt("killCounter", killCounter);
         return n;
@@ -57,6 +59,7 @@ public class PlayerData {
         d.resurrections = n.contains("resurrections") ? n.getInt("resurrections") : 2;
         d.skillPoints = n.getInt("skillPoints");
         d.unlocked = n.contains("unlocked") ? n.getInt("unlocked") : 1;
+        d.passives = n.getInt("passives");
         d.selectedArt = n.getInt("selectedArt");
         d.killCounter = n.getInt("killCounter");
         return d;

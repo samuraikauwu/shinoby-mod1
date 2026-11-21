@@ -17,6 +17,7 @@ public final class ShinobiUtil {
 
     public static void takeEmblems(ServerPlayerEntity p, int n) {
         if (p.isCreative() || n <= 0) return;
+        if (com.shinobi.combat.Skill.has(p, com.shinobi.combat.Skill.EMBLEM_SAVER) && p.getRandom().nextFloat() < 0.25f) return;
         PlayerInventory inv = p.getInventory();
         for (int i = 0; i < inv.size() && n > 0; i++) {
             ItemStack s = inv.getStack(i);
