@@ -57,6 +57,10 @@ public final class BossManager {
     }
 
     public static boolean spawn(ServerWorld world, Vec3d pos, Type type, ServerPlayerEntity summoner) {
+        return spawn(world, pos, type, summoner, null);
+    }
+
+    public static boolean spawn(ServerWorld world, Vec3d pos, Type type, ServerPlayerEntity summoner, String tag) {
         MobEntity mob = type.entity.get().create(world);
         if (mob == null) return false;
         mob.refreshPositionAndAngles(pos.x, pos.y, pos.z, summoner.getYaw() + 180f, 0f);
@@ -81,6 +85,7 @@ public final class BossManager {
             mob.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0f);
         }
         mob.setTarget(summoner);
+        if (tag != null) mob.addCommandTag(tag);
         world.spawnEntity(mob);
 
         ServerBossBar bar = new ServerBossBar(Text.translatable("boss.shinobi." + type.id), BossBar.Color.RED, BossBar.Style.NOTCHED_10);

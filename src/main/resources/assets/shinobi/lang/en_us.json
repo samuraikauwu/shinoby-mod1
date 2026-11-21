@@ -155,5 +155,12 @@
   "skill.shinobi.emblem_saver": "Frugality",
   "skill.shinobi.emblem_saver.desc": "25% chance not to spend a Spirit Emblem.",
   "skill.shinobi.posture_resist": "Resolve",
-  "skill.shinobi.posture_resist.desc": "Max posture +15."
+  "skill.shinobi.posture_resist.desc": "Max posture +15.",
+  "msg.shinobi.adventure_building": "Building the adventure map along +X (about 300 blocks). Zones appear one by one.",
+  "msg.shinobi.adventure_zone": "Zone %s of %s done",
+  "msg.shinobi.adventure_done": "Map built. Head east: shrine, village, grove and temple, castle, mountain, hall.",
+  "msg.shinobi.adventure_busy": "The map is already being built",
+  "msg.shinobi.adventure_overworld_only": "The map can only be built in the Overworld",
+  "msg.shinobi.adventure_gate_open": "The gate opens",
+  "msg.shinobi.adventure_victory": "The final boss is defeated. The path is complete."
 }

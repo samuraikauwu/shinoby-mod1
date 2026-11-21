@@ -155,5 +155,12 @@
   "skill.shinobi.emblem_saver": "Бережливость",
   "skill.shinobi.emblem_saver.desc": "25% шанс не потратить духовную эмблему.",
   "skill.shinobi.posture_resist": "Стойкость",
-  "skill.shinobi.posture_resist.desc": "Максимум осанки +15."
+  "skill.shinobi.posture_resist.desc": "Максимум осанки +15.",
+  "msg.shinobi.adventure_building": "Строю карту-прохождение вдоль оси +X (около 300 блоков). Подождите, зоны появляются по очереди.",
+  "msg.shinobi.adventure_zone": "Зона %s из %s готова",
+  "msg.shinobi.adventure_done": "Карта построена. Идите на восток: святилище, деревня, роща и храм, замок, гора, зал.",
+  "msg.shinobi.adventure_busy": "Карта уже строится",
+  "msg.shinobi.adventure_overworld_only": "Карту можно строить только в обычном мире (Верхний мир)",
+  "msg.shinobi.adventure_gate_open": "Ворота открылись",
+  "msg.shinobi.adventure_victory": "Последний босс повержен. Путь пройден."
 }

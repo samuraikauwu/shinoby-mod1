@@ -40,6 +40,7 @@ public class ShinobiMod implements ModInitializer {
         ModItems.register();
         ShinobiNet.registerServer();
         CombatEvents.register();
+        com.shinobi.world.AdventureMap.register();
         ShinobiCommands.register();
 
         ServerTickEvents.END_SERVER_TICK.register(ShinobiMod::serverTick);
@@ -72,6 +73,7 @@ public class ShinobiMod implements ModInitializer {
             if (t % 5 == 0) ShinobiNet.sync(p);
             if (t % 40 == 0) applyAttributes(p, ShinobiState.of(p));
         }
+        if (t % 20 == 0) com.shinobi.world.AdventureMap.tick(server);
         if (t % 200 == 0) ShinobiState.get(server).markDirty();
     }
 

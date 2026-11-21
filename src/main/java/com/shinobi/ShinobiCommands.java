@@ -51,6 +51,10 @@ public final class ShinobiCommands {
                     ctx.getSource().sendFeedback(() -> Text.translatable("msg.shinobi.unlocked_all"), false);
                     return 1;
                 }))
+                .then(CommandManager.literal("adventure").requires(s -> s.hasPermissionLevel(2)).executes(ctx -> {
+                    com.shinobi.world.AdventureMap.build(ctx.getSource().getPlayerOrThrow());
+                    return 1;
+                }))
                 .then(CommandManager.literal("reset").requires(s -> s.hasPermissionLevel(2)).executes(ctx -> {
                     ServerPlayerEntity p = ctx.getSource().getPlayerOrThrow();
                     PlayerData data = ShinobiState.of(p);
