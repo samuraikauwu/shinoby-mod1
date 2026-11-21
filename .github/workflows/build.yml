@@ -2,6 +2,8 @@ name: build
 on:
   push:
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,3 +21,10 @@ jobs:
         with:
           name: shinobi-mod
           path: build/libs/shinobi-1.0.0.jar
+      - name: Publish release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest build/libs/shinobi-1.0.0.jar --title "Shinobi mod (latest build)" --notes "Готовый мод. Положите shinobi-1.0.0.jar в папку mods (Fabric 1.20.1 + Fabric API)."
