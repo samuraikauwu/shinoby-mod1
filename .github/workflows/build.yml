@@ -19,7 +19,7 @@ jobs:
       - run: gradle build --no-daemon
       - name: Check mixin target in mappings
         run: |
-          for f in $(find . ~/.gradle -name '*.tiny' 2>/dev/null | head -5); do echo "== $f"; grep -m5 -P '\trenderHealthBar\t' "$f" || true; done
+          for f in $(find . ~/.gradle -name '*.tiny' 2>/dev/null | head -5); do echo "== $f"; grep -n 'renderHealthBar' "$f" | head -5 || true; done
       - name: Build adventure world
         run: bash tools/build-world.sh
       - name: Package

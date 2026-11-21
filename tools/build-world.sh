@@ -39,11 +39,11 @@ cmd "setworldspawn 0 -60 0"
 cmd "forceload add -8 -24 312 24" 15
 cmd "shinobi buildat 0 -61 0" 1
 for i in $(seq 1 150); do
-  grep -q 'adventure_done' server.log && break
+  grep -q 'Map built' server.log && break
   kill -0 $PID 2>/dev/null || { tail -80 server.log; exit 1; }
   sleep 2
 done
-grep -q 'adventure_done' server.log || { tail -120 server.log; exit 1; }
+grep -q 'Map built' server.log || { tail -120 server.log; exit 1; }
 sleep 5
 cmd "save-all flush" 20
 cmd "stop" 1
