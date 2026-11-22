@@ -181,7 +181,7 @@ public final class CombatEvents {
         Combat.fx(w, ParticleTypes.TOTEM_OF_UNDYING, p.getPos().add(0, 1, 0), 60, 0.5, 0.5);
         w.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ITEM_TOTEM_USE, SoundCategory.PLAYERS, 1.0f, 0.8f);
         p.sendMessage(Text.translatable("msg.shinobi.resurrected", d.resurrections), true);
-        if (p instanceof net.minecraft.server.network.ServerPlayerEntity sp) com.shinobi.net.ShinobiNet.cinematic(sp, 3, "cine.shinobi.resurrect", "cine.shinobi.resurrect.sub", 50);
+        ShinobiNet.cinematic(p, 3, "cine.shinobi.resurrect", "cine.shinobi.resurrect.sub", 50);
         ShinobiState.save(p);
         ShinobiNet.sync(p);
         return false;
