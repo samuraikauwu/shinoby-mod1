@@ -12,6 +12,13 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.village.TradeOffer;
+import net.minecraft.village.TradeOfferList;
+import net.minecraft.village.VillagerProfession;
+import com.shinobi.ModItems;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.LightningEntity;
@@ -357,6 +364,27 @@ public final class AdventureMap {
         c.w().spawnEntity(m);
     }
 
+    /** Торговец-NPC: неуязвимый, стоит на месте; платят эмблемами духа, получают семена, чётки и эмблемы за металл. */
+    private static void merchant(Ctx c, int x, int z) {
+        VillagerEntity v = EntityType.VILLAGER.create(c.w());
+        if (v == null) return;
+        BlockPos p = c.p(x, groundH(x) + 1, z);
+        v.refreshPositionAndAngles(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, 90f, 0f);
+        v.setVillagerData(v.getVillagerData().withProfession(VillagerProfession.WEAPONSMITH).withLevel(5));
+        v.setCustomName(Text.translatable("npc.shinobi.merchant"));
+        v.setCustomNameVisible(true);
+        v.setAiDisabled(true);
+        v.setInvulnerable(true);
+        v.setPersistent();
+        TradeOfferList offers = v.getOffers();
+        offers.clear();
+        offers.add(new TradeOffer(new ItemStack(Items.IRON_INGOT, 1), new ItemStack(ModItems.SPIRIT_EMBLEM, 2), 32, 1, 0f));
+        offers.add(new TradeOffer(new ItemStack(Items.GOLD_INGOT, 1), new ItemStack(ModItems.SPIRIT_EMBLEM, 6), 16, 1, 0f));
+        offers.add(new TradeOffer(new ItemStack(ModItems.SPIRIT_EMBLEM, 10), new ItemStack(ModItems.PRAYER_BEAD, 1), 4, 5, 0f));
+        offers.add(new TradeOffer(new ItemStack(ModItems.SPIRIT_EMBLEM, 16), new ItemStack(ModItems.GOURD_SEED, 1), 3, 8, 0f));
+        c.w().spawnEntity(v);
+    }
+
     /** Арена: круглая площадка со стеной, вход с запада; при hasExit — выход на восток, закрытый воротами. */
     private static void arena(Ctx c, int index, int cx, int r, String boss, boolean hasExit) {
         int h = groundH(cx);
@@ -430,6 +458,7 @@ public final class AdventureMap {
         path(c, -6, 20);
         torii(c, 6, 0, 7);
         idol(c, 13, 0);
+        merchant(c, 17, -3);
         for (int x = 0; x <= 18; x += 6) {
             post(c, x, -3);
             post(c, x, 3);
@@ -477,6 +506,7 @@ public final class AdventureMap {
             c.set(x, 1, -4, Blocks.SPRUCE_FENCE.getDefaultState());
         }
         idol(c, 24, -6);
+        merchant(c, 27, -5);
         spawnMob(c, EntityType.VINDICATOR, 34, 0);
         spawnMob(c, EntityType.VINDICATOR, 46, 2);
         spawnMob(c, EntityType.VINDICATOR, 58, -2);
@@ -532,6 +562,7 @@ public final class AdventureMap {
         // Храм в роще
         house(c, 108, -17, 11, 13, 5, true);
         c.set(114, 1, -11, ModBlocks.SCULPTORS_IDOL.getDefaultState());
+        merchant(c, 112, -9);
         // Каменные фонари вдоль тропы и мост через пруд
         for (int x = 96; x <= 140; x += 6) {
             post(c, x, -3);
@@ -571,6 +602,7 @@ public final class AdventureMap {
         }
         c.fill(px - 5, 1, -1, px - 5, 3, 1, AIR);
         c.set(px, 1, 0, ModBlocks.SCULPTORS_IDOL.getDefaultState());
+        merchant(c, px + 2, 1);
         // Погасшие костры и тории
         torii(c, 178, 0, 9);
         torii(c, 212, 0, 9);
@@ -621,6 +653,7 @@ public final class AdventureMap {
         tier(c, 249, -3, 253, 3, 22, 5);
         c.fill(240, 1, -1, 240, 3, 1, AIR);
         c.set(251, 1, 0, ModBlocks.SCULPTORS_IDOL.getDefaultState());
+        merchant(c, 253, 2);
         c.set(250, 1, 2, LANTERN);
         c.set(252, 1, -2, LANTERN);
         // Внутренние дворы: колонны

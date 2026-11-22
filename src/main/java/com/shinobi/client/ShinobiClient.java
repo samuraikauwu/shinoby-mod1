@@ -33,6 +33,7 @@ public class ShinobiClient implements ClientModInitializer {
     static boolean broken, tBroken, tBoss, sugar;
     static float tHealth;
     static int tSegments, perilousTicks, perilousType;
+    public static int dashAnim;
     static String tName = "";
     static int passives;
     static int resurrections = 2, resMax = 2, gourd = 3, gourdMax = 3, skillPoints, unlocked = 1, selectedArt, attackPower;
@@ -101,12 +102,20 @@ public class ShinobiClient implements ClientModInitializer {
             int ticks = buf.readInt();
             client.execute(() -> ShinobiCinematic.start(kind, title, sub, ticks));
         });
+        net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, sw, sh) -> {
+            if (screen instanceof net.minecraft.client.gui.screen.DeathScreen) {
+                long born = net.minecraft.util.Util.getMeasuringTimeMs();
+                net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterRender(screen).register((s, ctx, mx, my, d) ->
+                        ShinobiDeath.render(ctx, sw, sh, (net.minecraft.util.Util.getMeasuringTimeMs() - born) / 1000f));
+            }
+        });
         ClientTickEvents.END_CLIENT_TICK.register(ShinobiClient::tick);
         HudRenderCallback.EVENT.register(ShinobiHud::render);
     }
 
     private static void tick(MinecraftClient mc) {
         if (perilousTicks > 0) perilousTicks--;
+        if (dashAnim > 0) dashAnim--;
         ShinobiCinematic.tick();
         if (mc.player == null || mc.currentScreen != null) return;
 
@@ -125,6 +134,7 @@ public class ShinobiClient implements ClientModInitializer {
             buf.writeDouble(dir.x);
             buf.writeDouble(dir.z);
             ClientPlayNetworking.send(ShinobiNet.DASH, buf);
+            dashAnim = 8;
         }
         while (skillsKey.wasPressed()) {
             mc.setScreen(new ShinobiSkillScreen());

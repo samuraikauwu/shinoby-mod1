@@ -193,5 +193,7 @@
   "cine.shinobi.final.sub": "The last master is defeated",
   "cine.shinobi.resurrect": "Resurrection",
   "cine.shinobi.resurrect.sub": "You rise again",
-  "msg.shinobi.build_error": "Error building"
+  "msg.shinobi.build_error": "Error building",
+  "npc.shinobi.merchant": "Wandering Merchant",
+  "death.shinobi.sub": "Respawn to return to the idol"
 }

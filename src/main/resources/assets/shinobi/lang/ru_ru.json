@@ -193,5 +193,7 @@
   "cine.shinobi.final.sub": "Последний мастер повержен",
   "cine.shinobi.resurrect": "Воскрешение",
   "cine.shinobi.resurrect.sub": "Ты поднимаешься снова",
-  "msg.shinobi.build_error": "Ошибка при строительстве"
+  "msg.shinobi.build_error": "Ошибка при строительстве",
+  "npc.shinobi.merchant": "Торговец странник",
+  "death.shinobi.sub": "Нажми «Возродиться», чтобы вернуться к идолу"
 }

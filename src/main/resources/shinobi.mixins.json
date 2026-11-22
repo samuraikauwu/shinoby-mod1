@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "com.shinobi.mixin",
   "compatibilityLevel": "JAVA_17",
-  "client": ["InGameHudMixin"],
+  "client": ["InGameHudMixin", "PlayerModelMixin"],
   "injectors": {
     "defaultRequire": 0
   }
