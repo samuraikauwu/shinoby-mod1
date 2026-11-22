@@ -16,7 +16,38 @@ public final class ShinobiHud {
     private static final int FRAME_DARK = 0xFF1B1610;
     private static final int PANEL = 0xB0100C08;
 
+    // Сглаженные значения полос и «призрачная» полоса недавнего урона
+    private static float dispHp = -1f, ghostHp = -1f, dispPosture = 0f, dispBoss = -1f, ghostBoss = -1f;
+    private static long lastHit = 0;
+    private static long lastBossHit = 0;
+
     private ShinobiHud() {
+    }
+
+    private static float approach(float cur, float target, float speed) {
+        float d = target - cur;
+        if (Math.abs(d) < 0.002f) return target;
+        return cur + d * speed;
+    }
+
+    /** Красная вспышка по краям экрана, пока осанка игрока сломана или почти полна. */
+    private static void postureFlash(DrawContext c, int w, int h, long t) {
+        float pf = ShinobiClient.postureMax <= 0 ? 0 : ShinobiClient.posture / ShinobiClient.postureMax;
+        if (!ShinobiClient.broken && pf < 0.85f) return;
+        float pulse = 0.5f + 0.5f * (float) Math.sin(t * (ShinobiClient.broken ? 0.9 : 0.4));
+        int a = (int) ((ShinobiClient.broken ? 90 : 40) * (0.5f + pulse * 0.5f));
+        int col = (a << 24) | 0xB01810;
+        int e = Math.max(18, h / 7);
+        c.fillGradient(0, 0, w, e, col, 0x00000000);
+        c.fillGradient(0, h - e, w, h, 0x00000000, col);
+    }
+
+    private static void ornament(DrawContext c, int x, int y, int w) {
+        // золотые уголки по краям полосы
+        c.fill(x - 4, y - 1, x - 2, y + 2, 0xFFD8B85A);
+        c.fill(x + w + 2, y - 1, x + w + 4, y + 2, 0xFFD8B85A);
+        c.fill(x - 3, y - 3, x - 2, y + 4, 0xFF9A7E3A);
+        c.fill(x + w + 2, y - 3, x + w + 3, y + 4, 0xFF9A7E3A);
     }
 
     public static void render(DrawContext ctx, float delta) {
@@ -27,10 +58,12 @@ public final class ShinobiHud {
         int h = ctx.getScaledWindowHeight();
         long t = mc.world == null ? 0 : mc.world.getTime();
 
+        postureFlash(ctx, w, h, t);
         playerBars(ctx, mc, tr, t);
         targetBar(ctx, tr, w, t);
         bottomSlots(ctx, mc, tr, w, h);
         perilous(ctx, tr, w, h);
+        ShinobiCinematic.render(ctx, delta);
     }
 
     // ---------------------------------------------------------------- рамка полосы
@@ -68,13 +101,31 @@ public final class ShinobiHud {
         int x = 16;
         int y = 14;
         int vw = (int) Math.min(260, 90 + (maxHp - 20f) * 6f + 70);
-        bar(c, x, y, vw, 7, hp / maxHp, 0xFFB52A24, 0xFF5E0F0C);
+        float hpf = Math.max(0f, Math.min(1f, hp / maxHp));
+        if (dispHp < 0) {
+            dispHp = hpf;
+            ghostHp = hpf;
+        }
+        if (hpf < dispHp - 0.001f) lastHit = t;
+        dispHp = approach(dispHp, hpf, 0.35f);
+        if (t - lastHit > 14) ghostHp = approach(ghostHp, hpf, 0.08f);
+        if (ghostHp < hpf) ghostHp = hpf;
+        c.fill(x - 2, y - 2, x + vw + 2, y + 9, FRAME);
+        c.fill(x - 1, y - 1, x + vw + 1, y + 8, FRAME_DARK);
+        int gw = Math.round(vw * ghostHp);
+        if (gw > 0) c.fill(x, y, x + gw, y + 7, 0xFFE0B24A);
+        int hw = Math.round(vw * dispHp);
+        if (hw > 0) c.fillGradient(x, y, x + hw, y + 7, hp / maxHp < 0.25f ? 0xFFD83A2E : 0xFFB52A24, 0xFF5E0F0C);
+        c.fill(x, y, x + vw, y + 1, 0x22FFFFFF);
+        for (int k = 1; k < 4; k++) c.fill(x + vw * k / 4, y + 5, x + vw * k / 4 + 1, y + 7, 0x66000000);
+        ornament(c, x, y + 3, vw);
 
         float pf = Math.min(1f, ShinobiClient.posture / ShinobiClient.postureMax);
         int pw = Math.max(70, vw - 20);
         int top = ShinobiClient.broken ? ((t / 3 % 2 == 0) ? 0xFFFF4A3A : 0xFFAA1A12) : (pf > 0.75f ? 0xFFFFC04A : 0xFFF2EDE0);
         int bot = ShinobiClient.broken ? 0xFF7A0E08 : (pf > 0.75f ? 0xFFB5651A : 0xFFB8B09C);
-        bar(c, x, y + 14, pw, 4, ShinobiClient.broken ? 1f : pf, top, bot);
+        dispPosture = approach(dispPosture, ShinobiClient.broken ? 1f : pf, 0.4f);
+        bar(c, x, y + 14, pw, 4, dispPosture, top, bot);
 
         // Воскрешения — ромбы под полосой
         for (int i = 0; i < ShinobiClient.resMax; i++) {
@@ -98,7 +149,10 @@ public final class ShinobiHud {
     // ---------------------------------------------------------------- цель / босс
 
     private static void targetBar(DrawContext c, TextRenderer tr, int w, long t) {
-        if (ShinobiClient.tMax <= 1f || (ShinobiClient.tPosture <= 0 && !ShinobiClient.tBroken && !ShinobiClient.tBoss)) return;
+        if (ShinobiClient.tMax <= 1f || (ShinobiClient.tPosture <= 0 && !ShinobiClient.tBroken && !ShinobiClient.tBoss)) {
+            dispBoss = -1f;
+            return;
+        }
         int cx = w / 2;
         boolean boss = ShinobiClient.tBoss;
         float tf = Math.min(1f, ShinobiClient.tPosture / ShinobiClient.tMax);
@@ -107,7 +161,25 @@ public final class ShinobiHud {
         if (boss) {
             int bw = 240;
             c.drawCenteredTextWithShadow(tr, Text.literal(ShinobiClient.tName), cx, y - 2, 0xFFE8DCC0);
-            bar(c, cx - bw / 2, y + 12, bw, 6, ShinobiClient.tHealth, 0xFFB52A24, 0xFF5E0F0C);
+            float bh = Math.max(0f, Math.min(1f, ShinobiClient.tHealth));
+            if (dispBoss < 0 || bh > dispBoss + 0.3f) {
+                dispBoss = bh;
+                ghostBoss = bh;
+            }
+            if (bh < dispBoss - 0.001f) lastBossHit = t;
+            dispBoss = approach(dispBoss, bh, 0.3f);
+            if (t - lastBossHit > 14) ghostBoss = approach(ghostBoss, bh, 0.06f);
+            if (ghostBoss < bh) ghostBoss = bh;
+            int bx = cx - bw / 2;
+            c.fill(bx - 2, y + 10, bx + bw + 2, y + 20, FRAME);
+            c.fill(bx - 1, y + 11, bx + bw + 1, y + 19, FRAME_DARK);
+            int g2 = Math.round(bw * ghostBoss);
+            if (g2 > 0) c.fill(bx, y + 12, bx + g2, y + 18, 0xFFE0B24A);
+            int h2 = Math.round(bw * dispBoss);
+            if (h2 > 0) c.fillGradient(bx, y + 12, bx + h2, y + 18, 0xFFC02E26, 0xFF5E0F0C);
+            ornament(c, bx, y + 15, bw);
+            // тонкая линия-украшение над именем
+            c.fill(cx - 60, y - 6, cx + 60, y - 5, 0x66D8B85A);
             // Сегменты осанки — ромбы по краям полосы
             for (int i = 0; i < ShinobiClient.tSegments; i++) {
                 diamond(c, cx - bw / 2 - 10 - i * 11, y + 15, 4, 0xFFE8D6A0);

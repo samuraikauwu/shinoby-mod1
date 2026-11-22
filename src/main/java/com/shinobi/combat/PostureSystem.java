@@ -106,6 +106,7 @@ public final class PostureSystem {
         s.value = max(e);
         boolean player = e instanceof PlayerEntity;
         s.brokenTicks = player ? 70 : (isBoss(e) ? 80 : 110);
+        if (e instanceof com.shinobi.entity.ShinobiBossEntity bb) bb.setAnim(4);
         if (player) {
             e.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 70, 3));
             e.addStatusEffect(new StatusEffectInstance(StatusEffects.WEAKNESS, 80, 2));
@@ -130,6 +131,7 @@ public final class PostureSystem {
     }
 
     private static void release(LivingEntity e) {
+        if (e instanceof com.shinobi.entity.ShinobiBossEntity bb) bb.setAnim(0);
         if (e instanceof MobEntity m) m.setAiDisabled(false);
     }
 

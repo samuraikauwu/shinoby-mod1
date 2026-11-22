@@ -1,6 +1,9 @@
 package com.shinobi.entity;
 
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.ai.goal.ActiveTargetGoal;
 import net.minecraft.entity.ai.goal.LookAroundGoal;
 import net.minecraft.entity.ai.goal.LookAtEntityGoal;
@@ -16,9 +19,26 @@ import net.minecraft.world.World;
 
 /** Босс-воин: гуманоид с катаной. Параметры выставляет BossManager. */
 public class ShinobiBossEntity extends HostileEntity {
+    /** Поза: 0 — обычная, 1 — замах выпада, 2 — замах подсечки, 3 — захват, 4 — осанка сломана (колено). */
+    private static final TrackedData<Integer> ANIM = DataTracker.registerData(ShinobiBossEntity.class, TrackedDataHandlerRegistry.INTEGER);
+
     public ShinobiBossEntity(EntityType<? extends HostileEntity> type, World world) {
         super(type, world);
         this.experiencePoints = 50;
+    }
+
+    @Override
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(ANIM, 0);
+    }
+
+    public int getAnim() {
+        return this.dataTracker.get(ANIM);
+    }
+
+    public void setAnim(int v) {
+        this.dataTracker.set(ANIM, v);
     }
 
     @Override

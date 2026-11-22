@@ -29,6 +29,7 @@ public final class ShinobiNet {
     public static final Identifier CYCLE = ShinobiMod.id("cycle");
     public static final Identifier PERILOUS = ShinobiMod.id("perilous");
     public static final Identifier LEARN = ShinobiMod.id("learn");
+    public static final Identifier CINEMATIC = ShinobiMod.id("cinematic");
 
     private ShinobiNet() {
     }
@@ -74,6 +75,16 @@ public final class ShinobiNet {
         ShinobiUtil.velocity(p, dir.x * power, p.isOnGround() ? 0.18 : p.getVelocity().y, dir.z * power);
         w.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP, SoundCategory.PLAYERS, 0.5f, 1.6f);
         w.spawnParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.1, p.getZ(), 6, 0.25, 0.05, 0.25, 0.02);
+    }
+
+    /** Катсцена/баннер: kind 0 — вступление босса, 1 — название зоны, 2 — победа, 3 — воскрешение. title/sub — ключи перевода. */
+    public static void cinematic(ServerPlayerEntity p, int kind, String titleKey, String subKey, int ticks) {
+        PacketByteBuf buf = PacketByteBufs.create();
+        buf.writeInt(kind);
+        buf.writeString(titleKey);
+        buf.writeString(subKey);
+        buf.writeInt(ticks);
+        ServerPlayNetworking.send(p, CINEMATIC, buf);
     }
 
     /** Показать игроку вспышку опасной атаки (type: 0 выпад, 1 подсечка, 2 захват). */

@@ -7,6 +7,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -79,6 +80,7 @@ public class ShinobiClient implements ClientModInitializer {
             });
         });
 
+        EntityModelLayerRegistry.registerModelLayer(ShinobiBossModel.LAYER, ShinobiBossModel::createModelData);
         EntityRendererRegistry.register(ModEntities.LORD, ctx -> new ShinobiBossRenderer(ctx, "lord", 1.05f));
         EntityRendererRegistry.register(ModEntities.SHADOW, ctx -> new ShinobiBossRenderer(ctx, "shadow", 1.0f));
         EntityRendererRegistry.register(ModEntities.SAINT, ctx -> new ShinobiBossRenderer(ctx, "saint", 1.15f));
@@ -92,12 +94,20 @@ public class ShinobiClient implements ClientModInitializer {
             });
         });
 
+        ClientPlayNetworking.registerGlobalReceiver(ShinobiNet.CINEMATIC, (client, handler, buf, sender) -> {
+            int kind = buf.readInt();
+            String title = buf.readString();
+            String sub = buf.readString();
+            int ticks = buf.readInt();
+            client.execute(() -> ShinobiCinematic.start(kind, title, sub, ticks));
+        });
         ClientTickEvents.END_CLIENT_TICK.register(ShinobiClient::tick);
         HudRenderCallback.EVENT.register(ShinobiHud::render);
     }
 
     private static void tick(MinecraftClient mc) {
         if (perilousTicks > 0) perilousTicks--;
+        ShinobiCinematic.tick();
         if (mc.player == null || mc.currentScreen != null) return;
 
         while (dashKey.wasPressed()) {

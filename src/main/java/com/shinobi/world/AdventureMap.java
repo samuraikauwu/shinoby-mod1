@@ -12,6 +12,10 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.LightningEntity;
+import com.shinobi.net.ShinobiNet;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -22,7 +26,10 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -71,10 +78,19 @@ public final class AdventureMap {
         }
     }
 
+    /** Начало горы (скальная порода) и конец подъёма. */
+    private static final int ROCK_X = 301;
+    private static final int PLATEAU_X = 333;
+    /** Левые границы зон (относительно начала карты) и последний X. */
+    private static final int[] ZONE_START = {-6, 21, 81, 93, 171, 216, 301, 391};
+    private static final int MAP_END = 452;
+    /** Зона, в которой игрок был в последний раз (для заставок). */
+    private static final Map<UUID, Integer> LAST_ZONE = new HashMap<>();
+
     /** Высота земли вдоль оси X: ровно, затем подъём на гору и плато. */
     private static int groundH(int x) {
-        if (x <= 204) return 0;
-        if (x < 236) return (x - 204) / 2;
+        if (x <= ROCK_X) return 0;
+        if (x < PLATEAU_X) return (x - ROCK_X) / 2;
         return 16;
     }
 
@@ -94,6 +110,26 @@ public final class AdventureMap {
         ShinobiState st = ShinobiState.get(server);
         if (st.arenas.isEmpty()) return;
         ServerWorld w = server.getOverworld();
+
+        // Названия зон при переходе
+        if (st.origin != null) {
+            for (ServerPlayerEntity p : w.getPlayers()) {
+                if (p.isSpectator()) continue;
+                double rx = p.getX() - st.origin.getX();
+                double rz = p.getZ() - st.origin.getZ();
+                if (rx < ZONE_START[0] || rx > MAP_END || Math.abs(rz) > 24) {
+                    LAST_ZONE.remove(p.getUuid());
+                    continue;
+                }
+                int zone = 0;
+                for (int i = 0; i < ZONE_START.length; i++) if (rx >= ZONE_START[i]) zone = i;
+                Integer last = LAST_ZONE.put(p.getUuid(), zone);
+                if (last == null || last != zone) {
+                    ShinobiNet.cinematic(p, 1, "zone.shinobi." + zone, "zone.shinobi." + zone + ".sub", 70);
+                }
+            }
+        }
+
         for (ShinobiState.Arena a : st.arenas) {
             if (a.spawned) continue;
             for (ServerPlayerEntity p : w.getPlayers()) {
@@ -109,15 +145,49 @@ public final class AdventureMap {
                         a.spawned = true;
                         break;
                     }
-                    if (BossManager.spawn(w, Vec3d.ofBottomCenter(a.pos.up()), type, p, "shinobi_arena_" + a.index)) {
-                        a.spawned = true;
-                        st.markDirty();
-                        w.playSound(null, a.pos, SoundEvents.BLOCK_BELL_RESONATE, SoundCategory.HOSTILE, 3.0f, 0.5f);
-                    }
+                    a.spawned = true;
+                    st.markDirty();
+                    startIntro(w, a, type, p);
                     break;
                 }
             }
         }
+    }
+
+    /** Катсцена вступления: колокол, удар молнии, карточка босса; затем появляется сам босс. */
+    private static void startIntro(ServerWorld w, ShinobiState.Arena a, BossManager.Type type, ServerPlayerEntity summoner) {
+        String key = a.boss.toLowerCase();
+        Vec3d at = Vec3d.ofBottomCenter(a.pos.up());
+        for (ServerPlayerEntity p : w.getPlayers()) {
+            if (p.squaredDistanceTo(at) > 40 * 40) continue;
+            ShinobiNet.cinematic(p, 0, "cine.shinobi.boss." + key, "cine.shinobi.boss." + key + ".sub", 90);
+            p.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 70, 6, false, false, false));
+            p.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 100, 4, false, false, false));
+        }
+        w.playSound(null, a.pos, SoundEvents.BLOCK_BELL_RESONATE, SoundCategory.HOSTILE, 3.0f, 0.5f);
+        MinecraftServer server = w.getServer();
+        Tasks.later(server, 25, () -> {
+            w.playSound(null, a.pos, SoundEvents.BLOCK_BELL_USE, SoundCategory.HOSTILE, 3.0f, 0.4f);
+            w.spawnParticles(ParticleTypes.SOUL_FIRE_FLAME, at.x, at.y + 0.2, at.z, 60, 1.2, 0.1, 1.2, 0.03);
+        });
+        Tasks.later(server, 45, () -> {
+            LightningEntity bolt = EntityType.LIGHTNING_BOLT.create(w);
+            if (bolt != null) {
+                bolt.refreshPositionAfterTeleport(at.x, at.y, at.z);
+                bolt.setCosmetic(true);
+                w.spawnEntity(bolt);
+            }
+            w.spawnParticles(ParticleTypes.LARGE_SMOKE, at.x, at.y + 1, at.z, 70, 1.0, 1.2, 1.0, 0.04);
+        });
+        Tasks.later(server, 52, () -> {
+            ServerPlayerEntity who = summoner.isAlive() ? summoner : null;
+            if (who == null && !w.getPlayers().isEmpty()) who = w.getPlayers().get(0);
+            if (who == null) {
+                a.spawned = false;
+                return;
+            }
+            if (!BossManager.spawn(w, at, type, who, "shinobi_arena_" + a.index)) a.spawned = false;
+        });
     }
 
     private static void onBossDeath(ServerWorld w, LivingEntity boss) {
@@ -147,8 +217,13 @@ public final class AdventureMap {
             st.markDirty();
             for (ServerPlayerEntity p : w.getPlayers()) {
                 if (p.squaredDistanceTo(boss) > 80 * 80) continue;
-                if (idx == LAST_ARENA) p.sendMessage(Text.translatable("msg.shinobi.adventure_victory"), false);
-                else if (opened) p.sendMessage(Text.translatable("msg.shinobi.adventure_gate_open"), true);
+                if (idx == LAST_ARENA) {
+                    p.sendMessage(Text.translatable("msg.shinobi.adventure_victory"), false);
+                    ShinobiNet.cinematic(p, 2, "cine.shinobi.final", "cine.shinobi.final.sub", 140);
+                } else {
+                    if (opened) p.sendMessage(Text.translatable("msg.shinobi.adventure_gate_open"), true);
+                    ShinobiNet.cinematic(p, 2, "cine.shinobi.victory", "cine.shinobi.victory.sub", 90);
+                }
             }
         }
     }
@@ -171,11 +246,12 @@ public final class AdventureMap {
         }
         building = true;
         ShinobiState st = ShinobiState.get(w.getServer());
+        st.origin = new BlockPos(ox, gy, oz);
         Ctx c = new Ctx(w, ox, gy, oz, st);
         notify.accept(Text.translatable("msg.shinobi.adventure_building"));
 
         Runnable[] zones = {
-                () -> hub(c), () -> village(c), () -> grove(c), () -> castle(c), () -> mountain(c), () -> hall(c)
+                () -> hub(c), () -> village(c), () -> river(c), () -> grove(c), () -> graveyard(c), () -> castle(c), () -> mountain(c), () -> hall(c)
         };
         for (int i = 0; i < zones.length; i++) {
             final int n = i;
@@ -184,7 +260,7 @@ public final class AdventureMap {
                     zones[n].run();
                     notify.accept(Text.translatable("msg.shinobi.adventure_zone", n + 1, zones.length));
                 } catch (Exception e) {
-                    notify.accept(Text.literal("Ошибка при строительстве зоны " + (n + 1) + ": " + e));
+                    notify.accept(Text.literal("Ошибка при строительстве / Error building zone " + (n + 1) + ": " + e));
                 }
             });
         }
@@ -200,7 +276,7 @@ public final class AdventureMap {
     private static void terrain(Ctx c, int x1, int x2) {
         for (int x = x1; x <= x2; x++) {
             int h = groundH(x);
-            boolean rock = x >= 204;
+            boolean rock = x >= ROCK_X;
             for (int z = -21; z <= 21; z++) {
                 for (int y = -4; y < h; y++) c.set(x, y, z, rock ? STONE : DIRT);
                 c.set(x, h, z, rock ? STONE : GRASS);
@@ -323,6 +399,32 @@ public final class AdventureMap {
 
     // ------------------------------------------------------------------ зоны
 
+    private static void fillW(Ctx c, int x1, int y1, int z1, int x2, int y2, int z2, BlockState b) {
+        c.fill(x1, y1, z1, x2, y2, z2, b);
+    }
+
+    private static void tree(Ctx c, int x, int z, Random r) {
+        int h = groundH(x);
+        int t = 4 + r.nextInt(3);
+        c.fill(x, h + 1, z, x, h + t, z, Blocks.SPRUCE_LOG.getDefaultState());
+        BlockState leaf = Blocks.SPRUCE_LEAVES.getDefaultState();
+        for (int k = 0; k < 4; k++) {
+            int rad = 3 - k;
+            if (rad < 1) rad = 1;
+            c.fill(x - rad, h + t - 1 + k, z - rad, x + rad, h + t - 1 + k, z + rad, leaf);
+        }
+        c.set(x, h + t + 3, z, leaf);
+    }
+
+    private static void sakura(Ctx c, int x, int z, Random r) {
+        int h = groundH(x);
+        int t = 4 + r.nextInt(2);
+        c.fill(x, h + 1, z, x, h + t, z, Blocks.CHERRY_LOG.getDefaultState());
+        BlockState leaf = Blocks.CHERRY_LEAVES.getDefaultState();
+        c.fill(x - 3, h + t, z - 3, x + 3, h + t + 1, z + 3, leaf);
+        c.fill(x - 2, h + t + 2, z - 2, x + 2, h + t + 2, z + 2, leaf);
+    }
+
     private static void hub(Ctx c) {
         terrain(c, -6, 20);
         path(c, -6, 20);
@@ -332,101 +434,259 @@ public final class AdventureMap {
             post(c, x, -3);
             post(c, x, 3);
         }
+        // Каменные ступени-лантерны и цветущие деревья у святилища
+        Random r = new Random(77);
+        for (int x : new int[]{2, 9, 16}) {
+            sakura(c, x, -9, r);
+            sakura(c, x, 9, r);
+        }
+        // Колодец и скамьи
+        fillW(c, 15, 1, 6, 17, 1, 8, COBBLE);
+        fillW(c, 16, 1, 7, 16, 1, 7, Blocks.WATER.getDefaultState());
     }
 
     private static void village(Ctx c) {
-        terrain(c, 21, 70);
-        path(c, 21, 70);
-        for (int x : new int[]{26, 40, 54}) {
+        terrain(c, 21, 80);
+        path(c, 21, 80);
+        for (int x : new int[]{26, 40, 54, 68}) {
             house(c, x, -14, 7, 6, 4, true);
             house(c, x, 8, 7, 6, 4, false);
         }
-        for (int x = 24; x <= 68; x += 8) {
+        // Второй ряд — небольшие склады и сараи
+        for (int x : new int[]{30, 58}) {
+            house(c, x, -20, 5, 4, 3, true);
+        }
+        for (int x = 24; x <= 78; x += 8) {
             post(c, x, -3);
             post(c, x, 3);
+        }
+        // Рынок: навесы на красных столбах
+        for (int x : new int[]{36, 50}) {
+            fillW(c, x, 1, -6, x, 3, -6, LOG);
+            fillW(c, x + 3, 1, -6, x + 3, 3, -6, LOG);
+            fillW(c, x - 1, 4, -7, x + 4, 4, -5, RED);
+            c.set(x + 1, 1, -6, Blocks.BARREL.getDefaultState());
+            c.set(x + 2, 1, -6, Blocks.CRAFTING_TABLE.getDefaultState());
+        }
+        // Колодец деревни
+        fillW(c, 46, 1, 6, 48, 2, 8, COBBLE);
+        fillW(c, 47, 1, 7, 47, 2, 7, Blocks.WATER.getDefaultState());
+        // Забор вдоль дороги
+        for (int x = 22; x <= 78; x++) {
+            if (x % 8 == 0) continue;
+            c.set(x, 1, -4, Blocks.SPRUCE_FENCE.getDefaultState());
         }
         idol(c, 24, -6);
         spawnMob(c, EntityType.VINDICATOR, 34, 0);
         spawnMob(c, EntityType.VINDICATOR, 46, 2);
         spawnMob(c, EntityType.VINDICATOR, 58, -2);
         spawnMob(c, EntityType.VINDICATOR, 66, 0);
+        spawnMob(c, EntityType.VINDICATOR, 74, 3);
         spawnMob(c, EntityType.PILLAGER, 50, 5);
         spawnMob(c, EntityType.PILLAGER, 62, -5);
+        spawnMob(c, EntityType.PILLAGER, 38, 6);
+    }
+
+    /** Река с каменным мостом и мельницей. */
+    private static void river(Ctx c) {
+        terrain(c, 81, 92);
+        path(c, 81, 81);
+        path(c, 92, 92);
+        for (int x = 84; x <= 89; x++) {
+            for (int z = -21; z <= 21; z++) {
+                c.fill(x, -3, z, x, 0, z, Blocks.WATER.getDefaultState());
+                c.set(x, -4, z, Blocks.GRAVEL.getDefaultState());
+            }
+        }
+        // Мост с перилами и фонарями
+        for (int x = 82; x <= 91; x++)
+            for (int z = -2; z <= 2; z++) c.set(x, 0, z, BRICKS);
+        for (int x = 82; x <= 91; x++) {
+            c.set(x, 1, -2, WALL);
+            c.set(x, 1, 2, WALL);
+        }
+        for (int x : new int[]{82, 91}) {
+            c.set(x, 2, -2, LANTERN);
+            c.set(x, 2, 2, LANTERN);
+        }
+        // Мельница у реки
+        house(c, 78, 9, 5, 5, 4, false);
+        fillW(c, 84, 1, 8, 84, 6, 8, LOG);
+        fillW(c, 84, 3, 8, 84, 3, 11, PLANKS);
+        spawnMob(c, EntityType.PILLAGER, 80, 4);
+        spawnMob(c, EntityType.VINDICATOR, 91, -3);
     }
 
     private static void grove(Ctx c) {
-        terrain(c, 71, 133);
-        path(c, 71, 133);
+        terrain(c, 93, 170);
+        path(c, 93, 170);
         Random rnd = new Random(12345);
-        for (int i = 0; i < 150; i++) {
-            int x = 72 + rnd.nextInt(30);
+        for (int i = 0; i < 320; i++) {
+            int x = 94 + rnd.nextInt(52);
             int z = rnd.nextInt(41) - 20;
             if (Math.abs(z) <= 3) continue;
-            if (x >= 79 && x <= 91 && z >= -18 && z <= -4) continue;
+            if (x >= 108 && x <= 120 && z >= -18 && z <= -4) continue;
             int len = 5 + rnd.nextInt(8);
             c.fill(x, 1, z, x, len, z, Blocks.BAMBOO.getDefaultState());
         }
-        house(c, 80, -17, 11, 13, 5, true);
-        c.set(85, 1, -11, ModBlocks.SCULPTORS_IDOL.getDefaultState());
-        torii(c, 103, 0, 9);
-        post(c, 100, -3);
-        post(c, 100, 3);
-        arena(c, 0, 118, 11, "OWL", true);
+        // Храм в роще
+        house(c, 108, -17, 11, 13, 5, true);
+        c.set(114, 1, -11, ModBlocks.SCULPTORS_IDOL.getDefaultState());
+        // Каменные фонари вдоль тропы и мост через пруд
+        for (int x = 96; x <= 140; x += 6) {
+            post(c, x, -3);
+            post(c, x, 3);
+        }
+        fillW(c, 126, 0, 6, 138, 0, 16, Blocks.WATER.getDefaultState());
+        for (int x = 126; x <= 138; x++) c.set(x, 0, 11, BRICKS);
+        torii(c, 125, 0, 9);
+        torii(c, 130 + 0, 0, 9);
+        arena(c, 0, 150, 11, "OWL", true);
+    }
+
+    /** Кладбище и пагода: покинутые руины, туман, враги-скелеты. */
+    private static void graveyard(Ctx c) {
+        terrain(c, 171, 215);
+        path(c, 171, 215);
+        Random r = new Random(4242);
+        // Надгробия
+        for (int i = 0; i < 60; i++) {
+            int x = 174 + r.nextInt(40);
+            int z = r.nextInt(41) - 20;
+            if (Math.abs(z) <= 3 || (x >= 190 && x <= 204 && Math.abs(z) < 14)) continue;
+            c.set(x, 1, z, Blocks.COBBLESTONE_WALL.getDefaultState());
+            c.set(x, 2, z, Blocks.STONE_BRICK_SLAB.getDefaultState());
+        }
+        // Пагода в четыре яруса
+        int px = 197;
+        for (int t = 0; t < 4; t++) {
+            int rad = 5 - t;
+            int yb = t * 6;
+            c.fill(px - rad, yb + 1, -rad, px + rad, yb + 5, rad, PLANKS);
+            c.fill(px - rad + 1, yb + 1, -rad + 1, px + rad - 1, yb + 5, rad - 1, AIR);
+            c.fill(px - rad - 1, yb + 6, -rad - 1, px + rad + 1, yb + 6, rad + 1, ROOF);
+            c.set(px - rad, yb + 3, 0, GLASS);
+            c.set(px + rad, yb + 3, 0, GLASS);
+            c.set(px - rad + 1, yb + 1, -rad + 1, LANTERN);
+        }
+        c.fill(px - 5, 1, -1, px - 5, 3, 1, AIR);
+        c.set(px, 1, 0, ModBlocks.SCULPTORS_IDOL.getDefaultState());
+        // Погасшие костры и тории
+        torii(c, 178, 0, 9);
+        torii(c, 212, 0, 9);
+        for (int x = 174; x <= 214; x += 8) {
+            post(c, x, -4);
+            post(c, x, 4);
+        }
+        for (int x : new int[]{180, 186, 190, 208}) {
+            spawnMob(c, EntityType.SKELETON, x, -8);
+            spawnMob(c, EntityType.ZOMBIE, x + 2, 9);
+        }
+        spawnMob(c, EntityType.VINDICATOR, 200, 12);
+        spawnMob(c, EntityType.VINDICATOR, 206, -12);
+        spawnMob(c, EntityType.PILLAGER, 184, 4);
     }
 
     private static void castle(Ctx c) {
-        terrain(c, 134, 203);
-        path(c, 134, 203);
+        terrain(c, 216, 300);
+        path(c, 216, 300);
+        // Ров с подъёмным мостом
+        for (int x = 218; x <= 223; x++) {
+            for (int z = -21; z <= 21; z++) {
+                c.fill(x, -3, z, x, 0, z, Blocks.WATER.getDefaultState());
+                c.set(x, -4, z, Blocks.GRAVEL.getDefaultState());
+            }
+        }
+        for (int x = 218; x <= 223; x++)
+            for (int z = -2; z <= 2; z++) c.set(x, 0, z, PLANKS);
         // Внешняя стена с проёмом и башнями
-        c.fill(136, 1, -21, 200, 8, -21, BRICKS);
-        c.fill(136, 1, 21, 200, 8, 21, BRICKS);
-        c.fill(136, 1, -21, 138, 8, -3, BRICKS);
-        c.fill(136, 1, 3, 138, 8, 21, BRICKS);
-        c.fill(136, 9, -21, 138, 9, 21, ROOF);
-        c.fill(136, 1, -2, 138, 8, 2, AIR);
-        for (int z : new int[]{-8, 4}) tier(c, 135, z, 140, z + 4, 0, 11);
-        // Главная башня
-        tier(c, 148, -8, 168, 8, 0, 6);
-        tier(c, 150, -6, 166, 6, 7, 5);
-        tier(c, 153, -4, 163, 4, 13, 5);
-        c.fill(148, 1, -1, 148, 3, 1, AIR);
-        c.set(158, 1, 0, ModBlocks.SCULPTORS_IDOL.getDefaultState());
-        c.set(157, 1, 2, LANTERN);
-        c.set(159, 1, -2, LANTERN);
-        for (int x = 142; x <= 196; x += 9) {
+        c.fill(226, 1, -21, 296, 9, -21, BRICKS);
+        c.fill(226, 1, 21, 296, 9, 21, BRICKS);
+        c.fill(226, 1, -21, 228, 9, -3, BRICKS);
+        c.fill(226, 1, 3, 228, 9, 21, BRICKS);
+        c.fill(226, 10, -21, 228, 10, 21, ROOF);
+        c.fill(226, 1, -2, 228, 9, 2, AIR);
+        for (int z : new int[]{-8, 4}) tier(c, 225, z, 230, z + 4, 0, 12);
+        // Угловые башни
+        for (int z : new int[]{-21, 21}) tier(c, 293, z - 2, 297, z + 2, 0, 11);
+        // Зубцы на стенах
+        for (int x = 226; x <= 296; x += 2) {
+            c.set(x, 10, -21, BRICKS);
+            c.set(x, 10, 21, BRICKS);
+        }
+        // Главная башня замка
+        tier(c, 240, -9, 262, 9, 0, 7);
+        tier(c, 243, -7, 259, 7, 8, 6);
+        tier(c, 246, -5, 256, 5, 15, 6);
+        tier(c, 249, -3, 253, 3, 22, 5);
+        c.fill(240, 1, -1, 240, 3, 1, AIR);
+        c.set(251, 1, 0, ModBlocks.SCULPTORS_IDOL.getDefaultState());
+        c.set(250, 1, 2, LANTERN);
+        c.set(252, 1, -2, LANTERN);
+        // Внутренние дворы: колонны
+        for (int x = 232; x <= 290; x += 6) {
             post(c, x, -4);
             post(c, x, 4);
         }
-        spawnMob(c, EntityType.VINDICATOR, 142, -14);
-        spawnMob(c, EntityType.VINDICATOR, 158, 14);
-        spawnMob(c, EntityType.VINDICATOR, 172, -14);
-        spawnMob(c, EntityType.PILLAGER, 150, 15);
-        spawnMob(c, EntityType.PILLAGER, 170, 13);
-        arena(c, 1, 188, 12, "GENICHIRO", true);
+        for (int x = 266; x <= 276; x += 5) {
+            fillW(c, x, 1, -12, x, 6, -12, BRICKS);
+            fillW(c, x, 1, 12, x, 6, 12, BRICKS);
+        }
+        spawnMob(c, EntityType.VINDICATOR, 232, -14);
+        spawnMob(c, EntityType.VINDICATOR, 248, 14);
+        spawnMob(c, EntityType.VINDICATOR, 262, -14);
+        spawnMob(c, EntityType.VINDICATOR, 270, 12);
+        spawnMob(c, EntityType.PILLAGER, 238, 15);
+        spawnMob(c, EntityType.PILLAGER, 258, 13);
+        spawnMob(c, EntityType.PILLAGER, 266, -13);
+        arena(c, 1, 282, 12, "GENICHIRO", true);
     }
 
     private static void mountain(Ctx c) {
-        terrain(c, 204, 268);
-        path(c, 204, 268);
-        for (int x = 208; x <= 266; x += 10) {
+        terrain(c, 301, 390);
+        path(c, 301, 390);
+        Random r = new Random(9001);
+        // Сосны и валуны на склонах
+        for (int i = 0; i < 70; i++) {
+            int x = 304 + r.nextInt(62);
+            int z = r.nextInt(37) - 18;
+            if (Math.abs(z) <= 3) continue;
+            tree(c, x, z, r);
+        }
+        for (int x = 306; x <= 384; x += 10) {
             post(c, x, -4);
             post(c, x, 4);
         }
-        spawnMob(c, EntityType.PILLAGER, 214, 3);
-        spawnMob(c, EntityType.PILLAGER, 222, -4);
-        spawnMob(c, EntityType.VINDICATOR, 230, 2);
-        spawnMob(c, EntityType.VINDICATOR, 238, -3);
-        torii(c, 240, 0, 9);
-        arena(c, 2, 254, 12, "GYOUBU", true);
+        // Ступенчатые каменные террасы по пути вверх и тории
+        for (int x : new int[]{320, 340, 360}) torii(c, x, 0, 9);
+        // Горный храм на плато
+        house(c, 344, -16, 9, 8, 4, true);
+        c.set(348, groundH(344) + 1, -12, ModBlocks.SCULPTORS_IDOL.getDefaultState());
+        spawnMob(c, EntityType.PILLAGER, 312, 3);
+        spawnMob(c, EntityType.PILLAGER, 324, -4);
+        spawnMob(c, EntityType.VINDICATOR, 334, 2);
+        spawnMob(c, EntityType.VINDICATOR, 346, -3);
+        spawnMob(c, EntityType.VINDICATOR, 352, 5);
+        spawnMob(c, EntityType.PILLAGER, 362, -5);
+        arena(c, 2, 372, 12, "GYOUBU", true);
     }
 
     private static void hall(Ctx c) {
-        terrain(c, 269, 306);
-        path(c, 269, 276);
-        torii(c, 273, 0, 9);
+        terrain(c, 391, MAP_END);
+        path(c, 391, 408);
+        torii(c, 395, 0, 9);
         for (int z : new int[]{-8, 8}) {
-            for (int x = 270; x <= 276; x += 6) c.fill(x, groundH(x) + 1, z, x, groundH(x) + 6, z, BRICKS);
+            for (int x = 398; x <= 410; x += 6) c.fill(x, groundH(x) + 1, z, x, groundH(x) + 8, z, BRICKS);
         }
-        arena(c, 3, 290, 13, "ISSHIN", false);
+        // Тронный зал вокруг арены: колоннады и красные знамёна
+        for (int x = 414; x <= 448; x += 5) {
+            for (int z : new int[]{-17, 17}) {
+                c.fill(x, groundH(x) + 1, z, x, groundH(x) + 9, z, BRICKS);
+                c.fill(x, groundH(x) + 5, z + (z < 0 ? 1 : -1), x, groundH(x) + 8, z + (z < 0 ? 1 : -1), RED);
+            }
+        }
+        spawnMob(c, EntityType.VINDICATOR, 400, -4);
+        spawnMob(c, EntityType.VINDICATOR, 404, 4);
+        arena(c, 3, 430, 13, "ISSHIN", false);
     }
 }

@@ -1,6 +1,7 @@
 package com.shinobi.combat;
 
 import com.shinobi.data.PlayerRuntime;
+import com.shinobi.entity.ShinobiBossEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -82,10 +83,12 @@ public final class PerilousSystem {
                 continue; // сущность в другом мире/выгружена — обработает её мир или очистка
             }
             if (!mob.isAlive() || PostureSystem.isBroken(mob)) {
+                pose(mob, 0);
                 it.remove();
                 continue;
             }
             if (!(world.getEntity(t.target) instanceof ServerPlayerEntity target) || !target.isAlive()) {
+                pose(mob, 0);
                 it.remove();
                 continue;
             }
@@ -97,6 +100,7 @@ public final class PerilousSystem {
                 world.spawnParticles(DustParticleEffect.DEFAULT, head.x, head.y, head.z, 4, 0.25, 0.1, 0.25, 0);
             }
             if (t.ticksLeft <= 0) {
+                pose(mob, 0);
                 resolve(world, mob, target, t);
                 COOLDOWN.put(mob.getUuid(), now + (PostureSystem.isBoss(mob) ? 90 : 160));
                 it.remove();
@@ -111,6 +115,7 @@ public final class PerilousSystem {
         t.target = target.getUuid();
         t.startTick = now;
         ACTIVE.put(mob.getUuid(), t);
+        pose(mob, 1 + type.ordinal());
         mob.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, t.ticksLeft + 4, 3));
         world.playSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.BLOCK_BELL_USE, SoundCategory.HOSTILE, 1.5f, 0.5f);
         com.shinobi.net.ShinobiNet.perilous(target, type.ordinal());
@@ -177,6 +182,10 @@ public final class PerilousSystem {
         Vec3d c = mob.getPos().add(0, mob.getHeight() * 0.5, 0);
         Combat.fx(world, ParticleTypes.CRIT, c, 25, 0.5, 0.3);
         world.playSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.ITEM_SHIELD_BLOCK, SoundCategory.PLAYERS, 1.2f, 0.7f);
+    }
+
+    private static void pose(HostileEntity m, int v) {
+        if (m instanceof ShinobiBossEntity b && !PostureSystem.isBroken(m)) b.setAnim(v);
     }
 
     public static void forget(UUID id) {

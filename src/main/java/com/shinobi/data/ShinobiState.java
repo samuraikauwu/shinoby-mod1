@@ -33,6 +33,8 @@ public class ShinobiState extends PersistentState {
         public int opensAfter;
     }
 
+    /** Начало карты-прохождения (нулевая точка), null — карта не построена. */
+    public BlockPos origin;
     public final List<Arena> arenas = new ArrayList<>();
     public final List<Gate> gates = new ArrayList<>();
 
@@ -83,6 +85,12 @@ public class ShinobiState extends PersistentState {
             lg.add(c);
         }
         nbt.put("gates", lg);
+        if (origin != null) {
+            nbt.putInt("ox", origin.getX());
+            nbt.putInt("oy", origin.getY());
+            nbt.putInt("oz", origin.getZ());
+            nbt.putBoolean("hasOrigin", true);
+        }
         return nbt;
     }
 
@@ -114,6 +122,7 @@ public class ShinobiState extends PersistentState {
             g.opensAfter = c.getInt("after");
             s.gates.add(g);
         }
+        if (nbt.getBoolean("hasOrigin")) s.origin = new BlockPos(nbt.getInt("ox"), nbt.getInt("oy"), nbt.getInt("oz"));
         return s;
     }
 }

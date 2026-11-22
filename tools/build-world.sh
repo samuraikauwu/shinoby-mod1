@@ -36,14 +36,15 @@ cmd "gamerule spawnRadius 0"
 cmd "gamerule mobGriefing false"
 cmd "gamerule doInsomnia false"
 cmd "setworldspawn 0 -60 0"
-cmd "forceload add -8 -24 312 24" 15
+cmd "forceload add -8 -24 464 24" 25
 cmd "shinobi buildat 0 -61 0" 1
-for i in $(seq 1 150); do
+for i in $(seq 1 300); do
   grep -q 'Map built' server.log && break
   kill -0 $PID 2>/dev/null || { tail -80 server.log; exit 1; }
   sleep 2
 done
 grep -q 'Map built' server.log || { tail -120 server.log; exit 1; }
+if grep -q 'Ошибка при строительстве\|Error building' server.log; then grep -n 'Ошибка при строительстве\|Error building' server.log; exit 1; fi
 sleep 5
 cmd "save-all flush" 20
 cmd "stop" 1
