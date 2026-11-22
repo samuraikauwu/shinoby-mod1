@@ -30,7 +30,8 @@ public class ShinobiClient implements ClientModInitializer {
 
     // Данные HUD (приходят с сервера)
     static float posture, postureMax = 100, tPosture, tMax;
-    static boolean broken, tBroken, tBoss, sugar;
+    public static boolean broken;
+    static boolean tBroken, tBoss, sugar;
     static float tHealth;
     static int tSegments, perilousTicks, perilousType;
     public static int dashAnim;
