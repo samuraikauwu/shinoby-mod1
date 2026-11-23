@@ -62,6 +62,29 @@ public class ShinobiBossEntity extends HostileEntity {
     }
 
     @Override
+    public void tickMovement() {
+        super.tickMovement();
+        if (!this.getWorld().isClient || !this.isAlive()) return;
+        var r = this.getRandom();
+        if (this.age % 3 != 0) return;
+        double x = this.getX() + (r.nextDouble() - 0.5) * this.getWidth();
+        double y = this.getY() + r.nextDouble() * this.getHeight();
+        double z = this.getZ() + (r.nextDouble() - 0.5) * this.getWidth();
+        net.minecraft.entity.EntityType<?> t = this.getType();
+        if (this.getAnim() == 4) {
+            this.getWorld().addParticle(net.minecraft.particle.ParticleTypes.CRIT, x, y, z, 0, 0.05, 0);
+        } else if (t == com.shinobi.ModEntities.LORD) {
+            this.getWorld().addParticle(net.minecraft.particle.ParticleTypes.ELECTRIC_SPARK, x, y, z, 0, 0.02, 0);
+        } else if (t == com.shinobi.ModEntities.SHADOW) {
+            this.getWorld().addParticle(net.minecraft.particle.ParticleTypes.ASH, x, y, z, 0, -0.02, 0);
+        } else if (t == com.shinobi.ModEntities.SAINT) {
+            this.getWorld().addParticle(net.minecraft.particle.ParticleTypes.FLAME, x, this.getY() + 0.1, z, 0, 0.02, 0);
+        } else if (t == com.shinobi.ModEntities.ONI) {
+            this.getWorld().addParticle(net.minecraft.particle.ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0.03, 0);
+        }
+    }
+
+    @Override
     public boolean canImmediatelyDespawn(double distanceSquared) {
         return false;
     }

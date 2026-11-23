@@ -23,36 +23,64 @@ public class ShinobiBossModel extends BipedEntityModel<ShinobiBossEntity> {
 
     private final ModelPart cape;
     private final ModelPart sheath;
+    private final ModelPart skirtF;
+    private final ModelPart skirtB;
+    private final ModelPart sashL;
+    private final ModelPart sashR;
 
     public ShinobiBossModel(ModelPart root) {
         super(root);
-        this.cape = root.getChild("body").getChild("cape");
-        this.sheath = root.getChild("body").getChild("sheath");
+        ModelPart body = root.getChild("body");
+        this.cape = body.getChild("cape");
+        this.sheath = body.getChild("sheath");
+        this.skirtF = body.getChild("skirt_f");
+        this.skirtB = body.getChild("skirt_b");
+        this.sashL = body.getChild("sash_l");
+        this.sashR = body.getChild("sash_r");
     }
 
     public static TexturedModelData createModelData() {
         ModelData md = BipedEntityModel.getModelData(Dilation.NONE, 0.0f);
         ModelPartData root = md.getRoot();
 
+        // Голова: рога, гребень, маска
         ModelPartData head = root.getChild("head");
-        head.addChild("horn_l", ModelPartBuilder.create().uv(48, 32).cuboid(-0.5f, -4.0f, -0.5f, 1, 4, 1),
-                ModelTransform.of(3.0f, -7.5f, -1.0f, 0.0f, 0.0f, 0.45f));
-        head.addChild("horn_r", ModelPartBuilder.create().uv(48, 32).cuboid(-0.5f, -4.0f, -0.5f, 1, 4, 1),
-                ModelTransform.of(-3.0f, -7.5f, -1.0f, 0.0f, 0.0f, -0.45f));
+        head.addChild("horn_l", ModelPartBuilder.create().uv(64, 102).cuboid(-0.5f, -5.0f, -0.5f, 1, 5, 1),
+                ModelTransform.of(3.0f, -7.5f, -1.0f, 0.0f, 0.0f, 0.5f));
+        head.addChild("horn_r", ModelPartBuilder.create().uv(64, 102).cuboid(-0.5f, -5.0f, -0.5f, 1, 5, 1),
+                ModelTransform.of(-3.0f, -7.5f, -1.0f, 0.0f, 0.0f, -0.5f));
+        head.addChild("crest", ModelPartBuilder.create().uv(64, 90).cuboid(-0.5f, -13.5f, -2.5f, 1, 6, 5), ModelTransform.NONE);
+        head.addChild("mask", ModelPartBuilder.create().uv(64, 84).cuboid(-3.0f, -3.6f, -4.6f, 6, 4, 1), ModelTransform.NONE);
 
+        // Корпус: нагрудник, пояс, юбка из панелей, концы кушака, плащ, ножны
         ModelPartData body = root.getChild("body");
-        body.addChild("cape", ModelPartBuilder.create().uv(0, 32).cuboid(-5.0f, 0.0f, 0.0f, 10, 15, 1),
-                ModelTransform.of(0.0f, 0.5f, 2.2f, 0.12f, 0.0f, 0.0f));
-        body.addChild("skirt", ModelPartBuilder.create().uv(0, 48).cuboid(-4.5f, 0.0f, -2.5f, 9, 4, 5),
-                ModelTransform.pivot(0.0f, 11.5f, 0.0f));
-        body.addChild("sheath", ModelPartBuilder.create().uv(30, 48).cuboid(-0.5f, 0.0f, -0.5f, 1, 12, 1),
-                ModelTransform.of(3.2f, 9.0f, 2.6f, 0.0f, 0.0f, -1.0f));
+        body.addChild("chest", ModelPartBuilder.create().uv(64, 44).cuboid(-4.5f, 0.8f, -3.1f, 9, 6, 2), ModelTransform.NONE);
+        body.addChild("belt", ModelPartBuilder.create().uv(64, 54).cuboid(-4.5f, 9.6f, -2.5f, 9, 2, 5), ModelTransform.NONE);
+        body.addChild("skirt_f", ModelPartBuilder.create().uv(64, 62).cuboid(-4.0f, 0.0f, -0.5f, 8, 7, 1), ModelTransform.pivot(0.0f, 11.0f, -2.9f));
+        body.addChild("skirt_b", ModelPartBuilder.create().uv(64, 62).cuboid(-4.0f, 0.0f, -0.5f, 8, 7, 1), ModelTransform.pivot(0.0f, 11.0f, 2.9f));
+        body.addChild("skirt_l", ModelPartBuilder.create().uv(64, 72).cuboid(-0.5f, 0.0f, -2.0f, 1, 7, 4), ModelTransform.pivot(4.9f, 11.0f, 0.0f));
+        body.addChild("skirt_r", ModelPartBuilder.create().uv(64, 72).cuboid(-0.5f, 0.0f, -2.0f, 1, 7, 4), ModelTransform.pivot(-4.9f, 11.0f, 0.0f));
+        body.addChild("sash_l", ModelPartBuilder.create().uv(30, 64).cuboid(-1.0f, 0.0f, -0.5f, 2, 8, 1), ModelTransform.pivot(2.0f, 10.8f, -2.8f));
+        body.addChild("sash_r", ModelPartBuilder.create().uv(30, 64).cuboid(-1.0f, 0.0f, -0.5f, 2, 8, 1), ModelTransform.pivot(-1.0f, 10.8f, -2.8f));
+        body.addChild("cape", ModelPartBuilder.create().uv(0, 64).cuboid(-5.0f, 0.0f, 0.0f, 10, 16, 1),
+                ModelTransform.of(0.0f, 0.5f, 2.4f, 0.12f, 0.0f, 0.0f));
+        body.addChild("sheath", ModelPartBuilder.create().uv(24, 64).cuboid(-0.5f, 0.0f, -0.5f, 1, 12, 1),
+                ModelTransform.of(3.4f, 9.0f, 2.8f, 0.0f, 0.0f, -1.0f));
 
-        root.getChild("right_arm").addChild("pad", ModelPartBuilder.create().uv(24, 32).cuboid(-3.5f, -3.0f, -3.0f, 5, 2, 6),
-                ModelTransform.NONE);
-        root.getChild("left_arm").addChild("pad", ModelPartBuilder.create().uv(24, 32).cuboid(-1.5f, -3.0f, -3.0f, 5, 2, 6),
-                ModelTransform.NONE);
-        return TexturedModelData.of(md, 64, 64);
+        // Руки: двухъярусные наплечники и наручи
+        ModelPartData ra = root.getChild("right_arm");
+        ra.addChild("pauldron_a", ModelPartBuilder.create().uv(64, 0).cuboid(-4.0f, -3.0f, -3.5f, 6, 2, 7), ModelTransform.NONE);
+        ra.addChild("pauldron_b", ModelPartBuilder.create().uv(64, 10).cuboid(-3.5f, -1.8f, -3.0f, 5, 2, 6), ModelTransform.NONE);
+        ra.addChild("bracer", ModelPartBuilder.create().uv(64, 20).cuboid(-3.5f, 5.2f, -2.5f, 5, 5, 5), ModelTransform.NONE);
+        ModelPartData la = root.getChild("left_arm");
+        la.addChild("pauldron_a", ModelPartBuilder.create().uv(64, 0).cuboid(-2.0f, -3.0f, -3.5f, 6, 2, 7), ModelTransform.NONE);
+        la.addChild("pauldron_b", ModelPartBuilder.create().uv(64, 10).cuboid(-1.5f, -1.8f, -3.0f, 5, 2, 6), ModelTransform.NONE);
+        la.addChild("bracer", ModelPartBuilder.create().uv(64, 20).cuboid(-1.5f, 5.2f, -2.5f, 5, 5, 5), ModelTransform.NONE);
+
+        // Ноги: наголенники
+        root.getChild("right_leg").addChild("greave", ModelPartBuilder.create().uv(64, 32).cuboid(-2.5f, 5.5f, -2.5f, 5, 6, 5), ModelTransform.NONE);
+        root.getChild("left_leg").addChild("greave", ModelPartBuilder.create().uv(64, 32).cuboid(-2.5f, 5.5f, -2.5f, 5, 6, 5), ModelTransform.NONE);
+        return TexturedModelData.of(md, 128, 128);
     }
 
     @Override
@@ -146,5 +174,13 @@ public class ShinobiBossModel extends BipedEntityModel<ShinobiBossEntity> {
         // Плащ колышется от движения, ножны покачиваются
         this.cape.pitch = 0.12f + Math.min(limbDistance, 1.0f) * 0.65f + MathHelper.sin(t * 0.09f) * 0.05f;
         this.sheath.roll = -1.0f + MathHelper.sin(limbAngle * 0.6662f) * limbDistance * 0.12f;
+        float move = Math.min(limbDistance, 1.0f);
+        float flutter = MathHelper.sin(t * 0.11f) * 0.05f;
+        this.skirtF.pitch = -move * 0.45f + flutter + (pose == 4 ? 0.9f : 0f);
+        this.skirtB.pitch = move * 0.45f - flutter;
+        this.sashL.pitch = -move * 0.5f + MathHelper.sin(t * 0.13f) * 0.08f;
+        this.sashR.pitch = -move * 0.5f + MathHelper.sin(t * 0.13f + 1.3f) * 0.08f;
+        this.sashL.roll = MathHelper.sin(t * 0.09f) * 0.07f;
+        this.sashR.roll = -MathHelper.sin(t * 0.09f) * 0.07f;
     }
 }
