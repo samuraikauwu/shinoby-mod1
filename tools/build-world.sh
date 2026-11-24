@@ -35,6 +35,10 @@ cmd "gamerule doMobSpawning false"
 cmd "gamerule spawnRadius 0"
 cmd "gamerule mobGriefing false"
 cmd "gamerule doInsomnia false"
+cmd "gamerule doDaylightCycle false"
+cmd "gamerule doWeatherCycle false"
+cmd "time set 12800"
+cmd "weather clear"
 cmd "setworldspawn 0 -60 0"
 cmd "forceload add -8 -24 464 24" 25
 cmd "shinobi buildat 0 -61 0" 1
